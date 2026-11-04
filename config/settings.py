@@ -12,8 +12,15 @@ class Settings(BaseSettings):
     youtube_api_key: str | None = None
     google_client_id: str | None = None
     google_client_secret: str | None = None
-    media_storage_driver: str = "local"
+    media_storage_driver: str = "s3"
     media_local_root: str = "./data/media"
+    media_bucket: str | None = None
+    media_region: str = "auto"
+    media_endpoint_url: str | None = None
+    media_access_key_id: str | None = None
+    media_secret_access_key: str | None = None
+    media_public_base_url: str | None = None
+    upload_max_bytes: int = 1073741824
     redis_url: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
