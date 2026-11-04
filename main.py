@@ -176,6 +176,13 @@ async def section_page(request: Request, section: str):
         "notifications": ("Notifications", "Creator and channel updates will appear here."),
         "help": ("Help & feedback", "Help documentation and feedback tools are being prepared."),
     }
+    if section in {"watch-later", "liked", "history"}:
+        title, _description = sections[section]
+        return templates.TemplateResponse(
+            request=request,
+            name="library.html",
+            context={"title": title, "library_key": section},
+        )
     if section not in sections:
         return JSONResponse({"detail": "Not found."}, status_code=404)
     title, description = sections[section]
