@@ -1,0 +1,45 @@
+name: Py-Yt CI
+
+on:
+  push:
+    branches: [main, "phase-*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: pyyt
+          MYSQL_USER: pyyt
+          MYSQL_PASSWORD: pyyt-ci-password
+          MYSQL_ROOT_PASSWORD: pyyt-root-ci-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ppyyt-root-ci-password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      SECRET_KEY: test-only-secret-key-that-is-long-enough-for-ci
+      DATABASE_URL: mysql+pymysql://pyyt:pyyt-ci-password@127.0.0.1:3306/pyyt
+      APP_ENV: test
+      SESSION_COOKIE_SECURE: "false"
+      CORS_ORIGINS: http://localhost:8000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements.txt
+      - run: alembic upgrade head
+      - run: pytest -q
