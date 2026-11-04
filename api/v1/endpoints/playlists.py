@@ -41,17 +41,24 @@ def get_playlist(playlist_id: str, db: Session = Depends(get_db), user: User | N
     playlist = db.get(Playlist, playlist_id)
     if not playlist or (playlist.visibility == "private" and (not user or playlist.owner_id != user.id)):
         raise HTTPException(status_code=404, detail="Playlist not found.")
-    rows = db.execute(
+    is_owner = bool(user and playlist.owner_id == user.id)
+    statement = (
         select(PlaylistItem, Video)
         .join(Video, PlaylistItem.video_id == Video.id)
         .where(PlaylistItem.playlist_id == playlist_id)
         .order_by(PlaylistItem.position.asc())
-    ).all()
+    )
+    if not is_owner:
+        statement = statement.where(Video.status == "published", Video.visibility == "public")
+    rows = db.execute(statement).all()
     return {
         "id": playlist.id,
         "title": playlist.title,
         "description": playlist.description,
-        "items": [{"position": item.position, "video_id": video.id, "title": video.title} for item, video in rows],
+        "items": [
+            {"position": item.position, "video_id": video.id, "title": video.title}
+            for item, video in rows
+        ],
     }
 
 @router.post("/{playlist_id}/items", status_code=201)
@@ -63,8 +70,9 @@ def add_item(playlist_id: str, payload: PlaylistItemCreate, db: Session = Depend
     if not video:
         raise HTTPException(status_code=404, detail="Video not found.")
     video_channel = db.get(Channel, video.channel_id)
-    is_owner = bool(video_channel and video_channel.owner_id == user.id)
-    if not is_owner and (video.visibility != "public" or video.status != "published"):
+    is_video_owner = bool(video_channel and video_channel.owner_id == user.id)
+    is_public_video = video.visibility == "public" and video.status == "published"
+    if not is_public_video and not (is_video_owner and playlist.visibility == "private"):
         raise HTTPException(status_code=404, detail="Video not found.")
     existing = db.scalar(
         select(PlaylistItem).where(
