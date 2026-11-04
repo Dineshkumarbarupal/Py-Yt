@@ -26,10 +26,11 @@ form?.addEventListener("submit", async (event) => {
       }),
     });
     status.textContent = "Uploading video directly to media storage…";
-    const uploadForm = new FormData();
-    for (const [key, value] of Object.entries(presign.fields)) uploadForm.append(key, value);
-    uploadForm.append("file", file);
-    const uploadResponse = await fetch(presign.upload_url, { method: "POST", body: uploadForm });
+    const uploadResponse = await fetch(presign.upload_url, {
+      method: presign.method || "PUT",
+      headers: presign.headers || { "Content-Type": file.type },
+      body: file,
+    });
     if (!uploadResponse.ok) throw new Error("Media storage rejected the upload. Retry or check the storage configuration.");
     status.textContent = "Verifying uploaded video…";
     await apiRequest(`/uploads/${encodeURIComponent(presign.video_id)}/complete`, { method: "POST" });
