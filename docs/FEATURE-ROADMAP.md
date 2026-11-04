@@ -34,13 +34,15 @@ Py-Yt is an independent video platform inspired by YouTube's product categories.
 ## Creator Studio
 | Feature | Current status |
 |---|---|
-| Creator Studio landing page and upload page | Basic UI implemented |
+| Creator Studio dashboard, content, analytics, comments and upload pages | Implemented in code |
 | Direct-to-object-storage upload using presigned PUT | Implemented in code; bucket setup and E2E test pending |
 | Upload metadata verification and publish lifecycle | Implemented in code; security checks still need expansion |
-| Video metadata/category editing | Basic API implemented |
+| Video title/category/visibility editing and owner-only deletion | Basic API and Studio UI implemented |
 | Custom thumbnails, scheduled publishing, captions, chapters, end screens/cards | Planned |
-| Creator analytics: views, watch time, retention, traffic sources and audience | Planned |
-| Comment filters, moderation queue, pinned comments | Planned |
+| Basic creator analytics: total view counters and top videos | Implemented in code |
+| Advanced retention, traffic sources and audience analytics | Planned |
+| Creator hide/restore comment controls | Basic API and UI implemented |
+| Advanced comment filters, automated moderation queue and pinned comments | Planned |
 | A/B thumbnail/title experiments | Planned |
 | Copyright/rights workflow | Planned; legal and technical review required |
 | Community posts, memberships, merch, tips and ad revenue | Planned; payment, tax, eligibility and policy integrations required |
