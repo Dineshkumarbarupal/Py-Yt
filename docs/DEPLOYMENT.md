@@ -1,5 +1,14 @@
 # Deployment Guide
 
+## Recommended architecture and cost notes (checked 4 Nov 2026)
+
+- **Application + MySQL:** Railway is the recommended first host for this FastAPI/MySQL MVP. Railway's published Hobby plan has a $5/month minimum usage commitment and Pro has a $20/month minimum; actual resource use and outbound traffic are billed separately. Start with Hobby for a private beta, then review usage before inviting a larger audience. Source: https://railway.com/pricing
+- **Video object storage:** Use Cloudflare R2 Standard for original video objects and signed playback. Published Standard storage is $0.015 per GB-month, standard egress is free, and the listed monthly free allowance includes 10 GB-month storage plus Class A/B operation allowances. Request charges still apply beyond the free tier. Source: https://developers.cloudflare.com/r2/pricing/
+- **Why separate storage:** Video delivery can generate much more traffic than API calls. Keep file bytes on R2 and use signed URLs; do not proxy playback through FastAPI/Railway. This avoids using app-server egress for every watch.
+- **Alternative:** DigitalOcean App Platform plus Managed MySQL if you prefer a more traditional managed cloud setup. App Platform's small shared services start at $5/month, but production database charges, media storage and transfer are additional. Source: https://docs.digitalocean.com/products/app-platform/details/pricing/
+
+These are published list prices checked on the date above, not a guaranteed monthly bill. Estimate using expected stored GB, upload operations, playback GB/month, concurrent streams, API CPU/RAM and database size. For a video platform, bandwidth/CDN and transcoding become material cost drivers.
+
 ## Recommended first host: Railway
 
 For the current Phase 1 scope, Railway is the easiest initial target: it supports GitHub/Docker deployments and a MySQL service. The media bucket must be external object storage; do not use ephemeral app-disk storage for videos.
@@ -31,6 +40,10 @@ Documentation: https://docs.digitalocean.com/products/app-platform/
 Cloud Run is a managed container platform for FastAPI. Pair it with Cloud SQL for MySQL, Cloud Storage for media, Cloud CDN and Secret Manager. It offers flexibility and scaling controls but requires more IAM, networking and billing configuration.
 
 Documentation: https://docs.cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-fastapi-service
+
+## Local test deployment
+
+On your Windows development machine, install Docker Desktop and enable WSL 2 integration. Copy `.env.example` to `.env`, set non-default secrets and MySQL passwords, configure R2/S3 for uploads, then run `docker compose up --build`. The Compose `migrate` one-shot service applies Alembic migrations before the app is considered healthy; Nginx is exposed at `http://localhost`.
 
 ## VPS / self-managed option
 
