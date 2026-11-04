@@ -175,22 +175,104 @@ async function loadComments() {
   try {
     const result = await apiRequest(`/comments/video/${encodeURIComponent(videoId)}`);
     commentsList.replaceChildren();
-    for (const comment of result.items || []) {
-      const article = document.createElement("article");
-      article.className = "comment-item";
-      const author = document.createElement("strong");
-      author.textContent = comment.display_name || "Py-Yt user";
-      const body = document.createElement("p");
-      body.textContent = comment.body;
-      article.append(author, body);
-      commentsList.append(article);
-    }
-    if (!result.items?.length) {
+    const items = result.items || [];
+    if (!items.length) {
       const empty = document.createElement("p");
       empty.className = "muted";
       empty.textContent = "Be the first to comment.";
       commentsList.append(empty);
+      return;
     }
+
+    const children = new Map();
+    const roots = [];
+    for (const comment of items) {
+      if (comment.parent_comment_id) {
+        const siblings = children.get(comment.parent_comment_id) || [];
+        siblings.push(comment);
+        children.set(comment.parent_comment_id, siblings);
+      } else {
+        roots.push(comment);
+      }
+    }
+
+    function createComment(comment, depth = 0) {
+      const article = document.createElement("article");
+      article.className = "comment-item";
+      const header = document.createElement("div");
+      header.className = "comment-header";
+      const author = document.createElement("strong");
+      author.textContent = comment.display_name || "Py-Yt user";
+      const replyButton = document.createElement("button");
+      replyButton.type = "button";
+      replyButton.className = "comment-reply-button";
+      replyButton.textContent = "Reply";
+      header.append(author, replyButton);
+
+      const body = document.createElement("p");
+      body.textContent = comment.body;
+      article.append(header, body);
+
+      const replyContainer = document.createElement("div");
+      replyContainer.className = "comment-replies";
+      const replyForm = document.createElement("form");
+      replyForm.className = "inline-reply-form hidden";
+      const replyInput = document.createElement("textarea");
+      replyInput.name = "body";
+      replyInput.rows = 2;
+      replyInput.maxLength = 5000;
+      replyInput.placeholder = `Reply to ${comment.display_name || "this comment"}…`;
+      replyInput.required = true;
+      const submit = document.createElement("button");
+      submit.type = "submit";
+      submit.className = "secondary-button";
+      submit.textContent = "Post reply";
+      const replyStatus = document.createElement("span");
+      replyStatus.className = "muted";
+      replyStatus.setAttribute("role", "status");
+      replyForm.append(replyInput, submit, replyStatus);
+      replyButton.addEventListener("click", () => {
+        replyForm.classList.toggle("hidden");
+        if (!replyForm.classList.contains("hidden")) replyInput.focus();
+      });
+      replyForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const text = replyInput.value.trim();
+        if (!text) return;
+        submit.disabled = true;
+        replyStatus.textContent = "Posting…";
+        try {
+          await apiRequest("/comments", {
+            method: "POST",
+            body: JSON.stringify({
+              video_id: videoId,
+              body: text,
+              parent_comment_id: comment.id,
+            }),
+          });
+          await loadComments();
+        } catch (error) {
+          replyStatus.textContent = error.message;
+          if (error.message.toLowerCase().includes("sign in")) {
+            const signIn = document.createElement("a");
+            signIn.href = "/login";
+            signIn.textContent = "Sign in";
+            replyStatus.append(" ", signIn, " to reply.");
+          }
+        } finally {
+          submit.disabled = false;
+        }
+      });
+      replyContainer.append(replyForm);
+
+      for (const child of children.get(comment.id) || []) {
+        replyContainer.append(createComment(child, depth + 1));
+      }
+      if (depth < 4) article.append(replyContainer);
+      return article;
+    }
+
+    for (const comment of roots) commentsList.append(createComment(comment));
   } catch (error) {
     commentsList.textContent = error.message;
   }
