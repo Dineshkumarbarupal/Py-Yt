@@ -125,6 +125,7 @@ async function loadComments() {
     function createComment(comment, depth = 0) {
       const article = document.createElement("article");
       article.className = "comment-item";
+      article.id = `comment-${comment.id}`;
       const header = document.createElement("div");
       header.className = "comment-header";
       const author = document.createElement("strong");
