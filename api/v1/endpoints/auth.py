@@ -13,7 +13,7 @@ from core.security import create_access_token, hash_password, verify_password
 router = APIRouter(prefix="/auth")
 
 def _set_session(response: Response, user: User) -> None:
-    token = create_access_token(user.id)
+    token = create_access_token(user.id, user.auth_version)
     csrf = secrets.token_urlsafe(32)
     common = {
         "secure": settings.session_cookie_secure,
@@ -87,6 +87,7 @@ def change_password(
     if verify_password(payload.new_password, user.hashed_password):
         raise HTTPException(status_code=400, detail="New password must be different from the current password.")
     user.hashed_password = hash_password(payload.new_password)
+    user.auth_version += 1
     db.commit()
     _set_session(response, user)
     response.status_code = status.HTTP_204_NO_CONTENT
