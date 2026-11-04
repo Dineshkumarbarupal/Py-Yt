@@ -16,22 +16,48 @@ class CommentCreate(BaseModel):
 @router.get("/video/{video_id}")
 def list_comments(video_id: str, db: Session = Depends(get_db)):
     video = db.get(Video, video_id)
-    if not video or video.status != "published" or video.visibility != "public":
+    if not video or video.status != "published" or video.visibility == "private":
         raise HTTPException(status_code=404, detail="Video not found.")
-    rows = db.scalars(select(Comment).where(Comment.video_id == video_id, Comment.status == "visible").order_by(Comment.created_at.desc()).limit(100)).all()
-    return {"items": [{"id": c.id, "user_id": c.user_id, "body": c.body, "parent_comment_id": c.parent_comment_id, "created_at": c.created_at} for c in rows]}
+    rows = db.execute(
+        select(Comment, User)
+        .join(User, Comment.user_id == User.id)
+        .where(Comment.video_id == video_id, Comment.status == "visible")
+        .order_by(Comment.created_at.desc())
+        .limit(100)
+    ).all()
+    return {"items": [
+        {
+            "id": comment.id,
+            "user_id": comment.user_id,
+            "display_name": user.display_name,
+            "body": comment.body,
+            "parent_comment_id": comment.parent_comment_id,
+            "created_at": comment.created_at,
+        }
+        for comment, user in rows
+    ]}
 
 @router.post("", status_code=201)
 def create_comment(payload: CommentCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     video = db.get(Video, payload.video_id)
-    if not video or video.status != "published" or video.visibility != "public":
+    if not video or video.status != "published" or video.visibility == "private":
         raise HTTPException(status_code=404, detail="Video not found.")
     if payload.parent_comment_id:
         parent = db.get(Comment, payload.parent_comment_id)
         if not parent or parent.video_id != video.id:
             raise HTTPException(status_code=404, detail="Parent comment not found.")
-    comment = Comment(user_id=user.id, video_id=video.id, body=payload.body.strip(), parent_comment_id=payload.parent_comment_id)
+    comment = Comment(
+        user_id=user.id,
+        video_id=video.id,
+        body=payload.body.strip(),
+        parent_comment_id=payload.parent_comment_id,
+    )
     db.add(comment)
     db.commit()
     db.refresh(comment)
-    return {"id": comment.id, "body": comment.body, "created_at": comment.created_at}
+    return {
+        "id": comment.id,
+        "body": comment.body,
+        "display_name": user.display_name,
+        "created_at": comment.created_at,
+    }
