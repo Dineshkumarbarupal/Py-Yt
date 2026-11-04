@@ -126,6 +126,41 @@ async def watch_page(request: Request, video_id: str, user: User | None = Depend
         })
     return templates.TemplateResponse(request=request, name="watch.html", context={"video": video, "channel": channel})
 
+@app.get("/@{handle}", include_in_schema=False)
+async def public_channel_page(request: Request, handle: str):
+    with SessionLocal() as db:
+        channel = db.scalar(select(Channel).where(Channel.handle == handle))
+        if not channel:
+            return templates.TemplateResponse(request=request, name="section.html", status_code=404, context={
+                "title": "Channel not found",
+                "description": "This channel does not exist or is unavailable.",
+            })
+        rows = db.execute(
+            select(Video, Channel)
+            .join(Channel, Video.channel_id == Channel.id)
+            .where(Channel.id == channel.id, Video.status == "published", Video.visibility == "public")
+            .order_by(desc(Video.published_at), desc(Video.created_at))
+            .limit(48)
+        ).all()
+        videos = [
+            {
+                "id": video.id,
+                "title": video.title,
+                "thumbnail_url": video.thumbnail_url,
+                "duration": None,
+                "channel_name": channel.name,
+                "channel_initial": channel.name[:1].upper(),
+                "view_label": f"{video.view_count:,} views",
+                "published_label": video.published_at.strftime("%b %d, %Y") if video.published_at else "",
+            }
+            for video, _channel in rows
+        ]
+    return templates.TemplateResponse(
+        request=request,
+        name="channel.html",
+        context={"channel": channel, "videos": videos},
+    )
+
 @app.get("/{section}", include_in_schema=False)
 async def section_page(request: Request, section: str):
     sections = {
