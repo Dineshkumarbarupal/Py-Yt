@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -12,6 +12,11 @@ class PlaylistCreate(BaseModel):
     title: str = Field(min_length=1, max_length=160)
     description: str = Field(default="", max_length=5000)
     visibility: str = Field(default="private", pattern="^(public|unlisted|private)$")
+
+class PlaylistUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=160)
+    description: str | None = Field(default=None, max_length=5000)
+    visibility: str | None = Field(default=None, pattern="^(public|unlisted|private)$")
 
 class PlaylistItemCreate(BaseModel):
     video_id: str
@@ -61,6 +66,36 @@ def get_playlist(playlist_id: str, db: Session = Depends(get_db), user: User | N
         ],
     }
 
+
+@router.patch("/{playlist_id}")
+def update_playlist(
+    playlist_id: str,
+    payload: PlaylistUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    playlist = db.get(Playlist, playlist_id)
+    if not playlist or playlist.owner_id != user.id:
+        raise HTTPException(status_code=404, detail="Playlist not found.")
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(playlist, key, value.strip() if isinstance(value, str) and key in {"title", "description"} else value)
+    db.commit()
+    db.refresh(playlist)
+    return playlist
+
+@router.delete("/{playlist_id}", status_code=204)
+def delete_playlist(
+    playlist_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    playlist = db.get(Playlist, playlist_id)
+    if not playlist or playlist.owner_id != user.id:
+        raise HTTPException(status_code=404, detail="Playlist not found.")
+    db.delete(playlist)
+    db.commit()
+    return Response(status_code=204)
+
 @router.post("/{playlist_id}/items", status_code=201)
 def add_item(playlist_id: str, payload: PlaylistItemCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     playlist = db.get(Playlist, playlist_id)
@@ -88,3 +123,24 @@ def add_item(playlist_id: str, payload: PlaylistItemCreate, db: Session = Depend
     db.add(PlaylistItem(playlist_id=playlist_id, video_id=video.id, position=next_position))
     db.commit()
     return {"status": "added", "playlist_id": playlist_id, "video_id": video.id, "position": next_position}
+
+@router.delete("/{playlist_id}/items/{video_id}", status_code=204)
+def remove_item(
+    playlist_id: str,
+    video_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    playlist = db.get(Playlist, playlist_id)
+    if not playlist or playlist.owner_id != user.id:
+        raise HTTPException(status_code=404, detail="Playlist not found.")
+    item = db.scalar(
+        select(PlaylistItem).where(
+            PlaylistItem.playlist_id == playlist_id,
+            PlaylistItem.video_id == video_id,
+        )
+    )
+    if item:
+        db.delete(item)
+        db.commit()
+    return Response(status_code=204)
