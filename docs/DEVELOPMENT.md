@@ -26,11 +26,14 @@ Uploads require MEDIA_BUCKET, MEDIA_ACCESS_KEY_ID and MEDIA_SECRET_ACCESS_KEY, a
 ## Tests
 Run pytest -q. The test suite uses a test database URL if DATABASE_URL is not supplied. CI runs against MySQL 8.4 and applies Alembic migrations before tests.
 
-## Docker
-1. Copy .env.example to .env.
-2. Change all default secrets/passwords.
-3. Run docker compose up --build.
-4. Apply migrations: docker compose exec app alembic upgrade head.
-5. Open http://localhost through Nginx.
+## Docker Compose
+1. Install Docker Desktop with WSL 2 integration on Windows, or Docker Engine + Compose plugin on Linux.
+2. Copy .env.example to .env and replace every sample password and SECRET_KEY.
+3. Set MEDIA_* values for an S3-compatible bucket if you need to upload videos.
+4. Run docker compose up --build. Compose starts MySQL, waits for its healthcheck, runs Alembic in the one-shot migrate service, then starts FastAPI and Nginx.
+5. Run docker compose ps and verify the mysql, migrate, app and nginx services are healthy/completed as expected.
+6. Open http://localhost through Nginx.
+
+For schema changes, the migration service runs on the next compose up. To inspect logs use docker compose logs -f app migrate; to stop the stack use docker compose down. Persistent MySQL data remains in the named mysql_data volume.
 
 Never use example credentials in an internet-accessible deployment.
