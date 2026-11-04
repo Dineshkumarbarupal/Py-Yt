@@ -50,7 +50,7 @@ async def home(request: Request):
         rows = db.execute(
             select(Video, Channel)
             .join(Channel, Video.channel_id == Channel.id)
-            .where(Video.status == "published", Video.visibility == "public")
+            .where(Video.status == "published", Video.visibility != "private")
             .order_by(desc(Video.published_at), desc(Video.created_at))
             .limit(24)
         ).all()
@@ -80,6 +80,10 @@ async def signup_page(request: Request):
 @app.get("/studio", include_in_schema=False)
 async def studio_page(request: Request):
     return templates.TemplateResponse(request=request, name="studio.html", context={})
+
+@app.get("/studio/upload", include_in_schema=False)
+async def studio_upload_page(request: Request):
+    return templates.TemplateResponse(request=request, name="studio_upload.html", context={})
 
 @app.get("/watch/{video_id}", include_in_schema=False)
 async def watch_page(request: Request, video_id: str):
