@@ -31,6 +31,7 @@ def test_profile_update_changes_user_and_channel_name(client):
     with SessionLocal() as db:
         channel = db.query(Channel).filter(Channel.owner_id == updated.json()["id"]).one()
         assert channel.name == "Updated Creator"
+        assert channel.description == "I publish coding tutorials."
 
     current = client.get("/api/v1/auth/me")
     assert current.status_code == 200
