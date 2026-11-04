@@ -8,9 +8,12 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
-    op.add_column("users", sa.Column("bio", sa.Text(), nullable=False, server_default=""))
+    # MySQL does not permit a default on TEXT columns. Add nullable,
+    # backfill existing rows, then enforce NOT NULL.
+    op.add_column("users", sa.Column("bio", sa.Text(), nullable=True))
+    op.execute("UPDATE users SET bio = '' WHERE bio IS NULL")
+    op.alter_column("users", "bio", existing_type=sa.Text(), nullable=False)
     op.add_column("users", sa.Column("avatar_url", sa.String(length=2048), nullable=True))
-    op.alter_column("users", "bio", server_default=None)
 
 def downgrade() -> None:
     op.drop_column("users", "avatar_url")
