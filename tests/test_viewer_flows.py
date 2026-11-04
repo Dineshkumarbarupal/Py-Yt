@@ -123,3 +123,17 @@ def test_subscription_lifecycle(client):
     feed = second_client.get("/api/v1/subscriptions/feed")
     assert feed.status_code == 200
     assert [item["id"] for item in feed.json()["items"]] == [video_id]
+
+    second_client.post(
+        "/api/v1/auth/logout",
+        headers={"X-CSRF-Token": second_client.cookies.get("pyyt_csrf")},
+    )
+    creator_login = second_client.post(
+        "/api/v1/auth/login",
+        json={"email": second["email"], "password": "A-very-strong-test-password-9"},
+    )
+    assert creator_login.status_code == 200
+    creator_notifications = second_client.get("/api/v1/notifications")
+    assert creator_notifications.status_code == 200
+    assert creator_notifications.json()["unread_count"] == 1
+    assert creator_notifications.json()["items"][0]["type"] == "new_subscriber"
