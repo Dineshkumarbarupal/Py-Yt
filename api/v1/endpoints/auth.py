@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from config.settings import settings
 from db.models import Channel, User
-from db.schemas import LoginRequest, RegisterRequest, UserResponse
+from db.schemas import LoginRequest, PasswordChangeRequest, ProfileUpdate, RegisterRequest, UserResponse
 from db.session import get_db
 from core.dependencies import get_current_user
 from core.security import create_access_token, hash_password, verify_password
@@ -56,6 +56,40 @@ def login(payload: LoginRequest, response: Response, db: Session = Depends(get_d
         raise HTTPException(status_code=403, detail="This account is disabled.")
     _set_session(response, user)
     return user
+
+
+@router.patch("/me", response_model=UserResponse)
+def update_profile(
+    payload: ProfileUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    user.display_name = payload.display_name.strip()
+    user.bio = payload.bio.strip()
+    user.avatar_url = str(payload.avatar_url) if payload.avatar_url else None
+    channel = db.scalar(select(Channel).where(Channel.owner_id == user.id))
+    if channel:
+        channel.name = user.display_name
+    db.commit()
+    db.refresh(user)
+    return user
+
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(
+    payload: PasswordChangeRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if not verify_password(payload.current_password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect.")
+    if verify_password(payload.new_password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="New password must be different from the current password.")
+    user.hashed_password = hash_password(payload.new_password)
+    db.commit()
+    _set_session(response, user)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(response: Response):
