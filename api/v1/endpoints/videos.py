@@ -5,7 +5,9 @@ from sqlalchemy import desc, or_, select
 from sqlalchemy.orm import Session
 from db.models import Channel, Video, User
 from db.session import get_db
-from core.dependencies import get_current_user
+from core.dependencies import get_current_user, get_optional_user
+from core.media_storage import MediaStorageNotConfigured, create_playback_url
+from botocore.exceptions import BotoCoreError, ClientError
 
 router = APIRouter(prefix="/videos")
 
@@ -15,6 +17,9 @@ class VideoCreate(BaseModel):
     category: str = Field(default="General", pattern="^(General|Music|Gaming|Technology|Learning|Live|Comedy|Sports|News|Entertainment)$")
     source_url: HttpUrl | None = None
     thumbnail_url: HttpUrl | None = None
+
+class VideoPublish(BaseModel):
+    visibility: str = Field(default="public", pattern="^(public|unlisted|private)$")
 
 class VideoUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=200)
@@ -98,18 +103,43 @@ def update_video(video_id: str, payload: VideoUpdate, db: Session = Depends(get_
     return video
 
 @router.post("/{video_id}/publish")
-def publish_video(video_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def publish_video(video_id: str, payload: VideoPublish, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     video = db.get(Video, video_id)
     channel = db.scalar(select(Channel).where(Channel.owner_id == user.id))
     if not video or not channel or video.channel_id != channel.id:
         raise HTTPException(status_code=404, detail="Video not found.")
-    if not video.source_url:
-        raise HTTPException(status_code=409, detail="A verified media upload or playback source is required before publishing.")
+    if not video.storage_key or video.status != "ready":
+        raise HTTPException(status_code=409, detail="A completed and verified media upload is required before publishing.")
     video.status = "published"
     video.published_at = datetime.now(timezone.utc).replace(tzinfo=None)
-    video.visibility = "public"
+    video.visibility = payload.visibility
     db.commit()
     return {"id": video.id, "status": video.status, "visibility": video.visibility}
+
+@router.get("/{video_id}/playback")
+def get_playback(
+    video_id: str,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+):
+    video = db.get(Video, video_id)
+    if not video or video.status not in {"ready", "published"}:
+        raise HTTPException(status_code=404, detail="Video is not ready for playback.")
+    channel = db.get(Channel, video.channel_id)
+    is_owner = bool(user and channel and channel.owner_id == user.id)
+    if video.status != "published" and not is_owner:
+        raise HTTPException(status_code=404, detail="Video not found.")
+    if video.visibility == "private" and not is_owner:
+        raise HTTPException(status_code=404, detail="Video not found.")
+    if not video.storage_key:
+        raise HTTPException(status_code=409, detail="This video has no verified media object.")
+    try:
+        url = create_playback_url(video.storage_key, expires_in=600)
+    except MediaStorageNotConfigured as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except (BotoCoreError, ClientError):
+        raise HTTPException(status_code=502, detail="Could not create a playback URL.")
+    return {"video_id": video.id, "playback_url": url, "expires_in": 600, "mime_type": video.mime_type}
 
 @router.post("/{video_id}/view")
 def record_view(video_id: str, db: Session = Depends(get_db)):
