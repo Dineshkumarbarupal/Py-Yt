@@ -10,7 +10,7 @@ Py-Yt is an independent video platform inspired by YouTube's product categories.
 | Home feed, responsive navigation and category chips | Implemented in code |
 | Category-filtered feed and local catalog search | Implemented in code |
 | Watch page and signed playback URL | Implemented in code; object storage configuration required |
-| Registration, login, logout and current account | Implemented in code |
+| Registration, login, logout, current account, profile editing and password change | Implemented in code |
 | Public creator channel page | Implemented in code |
 | Subscribe/unsubscribe and subscriptions list page | Implemented in code |
 | Playlists: create, list, view and add videos | Implemented in code |
