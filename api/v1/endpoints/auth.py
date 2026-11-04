@@ -8,7 +8,7 @@ from db.models import Channel, User
 from db.schemas import LoginRequest, RegisterRequest, UserResponse
 from db.session import get_db
 from py.dependencies import get_current_user
-from py.security import create_access_token, hash_password, verify_password
+from core.security import create_access_token, hash_password, verify_password
 
 router = APIRouter(prefix="/auth")
 
