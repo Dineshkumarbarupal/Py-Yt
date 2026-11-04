@@ -45,7 +45,7 @@ def get_playlist(playlist_id: str, db: Session = Depends(get_db), user: User | N
     statement = (
         select(PlaylistItem, Video)
         .join(Video, PlaylistItem.video_id == Video.id)
-        .where(PlaylistItem.playlist_id == playlist_id)
+        .where(PlaylistItem.playlist_id == playlist_id, Video.status != "deleted")
         .order_by(PlaylistItem.position.asc())
     )
     if not is_owner:
@@ -67,7 +67,7 @@ def add_item(playlist_id: str, payload: PlaylistItemCreate, db: Session = Depend
     video = db.get(Video, payload.video_id)
     if not playlist or playlist.owner_id != user.id:
         raise HTTPException(status_code=404, detail="Playlist not found.")
-    if not video:
+    if not video or video.status == "deleted":
         raise HTTPException(status_code=404, detail="Video not found.")
     video_channel = db.get(Channel, video.channel_id)
     is_video_owner = bool(video_channel and video_channel.owner_id == user.id)
