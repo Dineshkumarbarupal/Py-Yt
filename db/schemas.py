@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import AnyHttpUrl, BaseModel, ConfigDict, EmailStr, Field
 
 class RegisterRequest(BaseModel):
     email: EmailStr
@@ -12,7 +12,7 @@ class LoginRequest(BaseModel):
 class ProfileUpdate(BaseModel):
     display_name: str = Field(min_length=2, max_length=80)
     bio: str = Field(default="", max_length=500)
-    avatar_url: str | None = Field(default=None, max_length=2048)
+    avatar_url: AnyHttpUrl | None = None
 
 class PasswordChangeRequest(BaseModel):
     current_password: str = Field(min_length=1, max_length=128)
