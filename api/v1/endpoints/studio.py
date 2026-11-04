@@ -2,21 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
-from db.models import Channel, Comment, Subscription, User, Video
+from db.models import Comment, Subscription, User, Video
 from db.session import get_db
 from core.dependencies import get_current_user
+from services.creator import get_owned_channel
 
 router = APIRouter(prefix="/studio")
 
-def _owned_channel(db: Session, user: User) -> Channel:
-    channel = db.scalar(select(Channel).where(Channel.owner_id == user.id))
-    if not channel:
-        raise HTTPException(status_code=404, detail="Creator channel not found.")
-    return channel
-
 @router.get("/overview")
 def overview(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    channel = _owned_channel(db, user)
+    channel = get_owned_channel(db, user)
     published_count = db.scalar(
         select(func.count(Video.id)).where(Video.channel_id == channel.id, Video.status == "published")
     ) or 0
