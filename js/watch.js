@@ -146,6 +146,17 @@ async function openPlaylistDialog() {
   }
 }
 
+
+document.querySelector("#watch-later-button")?.addEventListener("click", async () => {
+  try {
+    const result = await apiRequest(`/library/watch-later/${encodeURIComponent(videoId)}`, { method: "POST" });
+    toast(result.status === "already_saved" ? "This video is already in Watch later." : "Added to Watch later.");
+  } catch (error) {
+    toast(error.message);
+    if (error.message.toLowerCase().includes("sign in")) window.location.assign("/login");
+  }
+});
+
 document.querySelector("#save-button")?.addEventListener("click", openPlaylistDialog);
 document.querySelector("#close-playlist-dialog")?.addEventListener("click", () => playlistDialog?.close());
 document.querySelector("#cancel-playlist")?.addEventListener("click", () => playlistDialog?.close());
