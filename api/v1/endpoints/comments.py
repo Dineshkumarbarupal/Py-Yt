@@ -45,7 +45,7 @@ def create_comment(payload: CommentCreate, db: Session = Depends(get_db), user: 
         raise HTTPException(status_code=404, detail="Video not found.")
     if payload.parent_comment_id:
         parent = db.get(Comment, payload.parent_comment_id)
-        if not parent or parent.video_id != video.id:
+        if not parent or parent.video_id != video.id or parent.status != "visible":
             raise HTTPException(status_code=404, detail="Parent comment not found.")
     comment = Comment(
         user_id=user.id,
