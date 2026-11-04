@@ -228,6 +228,8 @@ async def section_page(request: Request, section: str):
         return templates.TemplateResponse(request=request, name="playlists.html", context={})
     if section == "settings":
         return templates.TemplateResponse(request=request, name="settings.html", context={})
+    if section == "notifications":
+        return templates.TemplateResponse(request=request, name="notifications.html", context={})
     if section == "settings":
         return templates.TemplateResponse(request=request, name="settings.html", context={})
     if section not in sections:
