@@ -100,6 +100,14 @@ async def studio_section_page(request: Request, studio_section: str):
     title, description = studio_sections[studio_section]
     return templates.TemplateResponse(request=request, name="section.html", context={"title": title, "description": description})
 
+@app.get("/playlist/{playlist_id}", include_in_schema=False)
+async def playlist_detail_page(request: Request, playlist_id: str):
+    return templates.TemplateResponse(
+        request=request,
+        name="playlist_detail.html",
+        context={"playlist_id": playlist_id},
+    )
+
 @app.get("/watch/{video_id}", include_in_schema=False)
 async def watch_page(request: Request, video_id: str, user: User | None = Depends(get_optional_user)):
     with SessionLocal() as db:
@@ -183,6 +191,10 @@ async def section_page(request: Request, section: str):
             name="library.html",
             context={"title": title, "library_key": section},
         )
+    if section == "subscriptions":
+        return templates.TemplateResponse(request=request, name="subscriptions.html", context={})
+    if section == "playlists":
+        return templates.TemplateResponse(request=request, name="playlists.html", context={})
     if section not in sections:
         return JSONResponse({"detail": "Not found."}, status_code=404)
     title, description = sections[section]
