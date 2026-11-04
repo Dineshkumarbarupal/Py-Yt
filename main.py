@@ -53,7 +53,7 @@ async def home(request: Request):
         rows = db.execute(
             select(Video, Channel)
             .join(Channel, Video.channel_id == Channel.id)
-            .where(Video.status == "published", Video.visibility != "private")
+            .where(Video.status == "published", Video.visibility == "public")
             .order_by(desc(Video.published_at), desc(Video.created_at))
             .limit(24)
         ).all()
@@ -106,7 +106,7 @@ async def watch_page(request: Request, video_id: str, user: User | None = Depend
         row = db.execute(
             select(Video, Channel)
             .join(Channel, Video.channel_id == Channel.id)
-            .where(Video.id == video_id, Video.status == "published", Video.visibility == "public")
+            .where(Video.id == video_id, Video.status.in_(["ready", "published"]))
         ).first()
     if not row:
         return templates.TemplateResponse(request=request, name="section.html", status_code=404, context={
