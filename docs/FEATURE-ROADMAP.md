@@ -19,7 +19,7 @@ Py-Yt is an independent video platform inspired by YouTube's product categories.
 | Watch history and progress | API and personal history page implemented |
 | Watch Later and Liked videos library | API and personal library page implemented |
 | In-app notifications for new videos, subscribers, comments and replies | Implemented in code with unread/read controls |
-| Playback speed, theater mode, keyboard shortcuts, picture-in-picture, share and like/dislike actions | Implemented in code |
+| Playback speed, theater mode, keyboard shortcuts, picture-in-picture, share, like/dislike, autoplay and latest Up next list | Implemented in code |
 | Adaptive quality selector, chapters, caption/subtitle tracks and mini-player | Planned |
 | Video/comment reporting and admin moderation queue | Basic implementation in code |
 | Sharing | Implemented in code |
