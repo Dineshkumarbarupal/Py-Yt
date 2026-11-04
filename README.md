@@ -30,7 +30,7 @@ Shorts feed, video transcoding/HLS renditions, live streaming/chat, recommendati
 
 ## Repository layout
 
-The project follows modular directories: asset, component, core, css, data, db, js, py, template, api, middleware, config, migrations, tests and docs.
+The project follows modular directories: asset, component, core, css, data, db, js, services, template, api, middleware, config, migrations, tests and docs.
 
 ## Run locally
 
