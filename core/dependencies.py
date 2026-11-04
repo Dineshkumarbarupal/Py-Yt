@@ -17,3 +17,15 @@ def get_current_user(
     if not user or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Account is unavailable.")
     return user
+
+def get_optional_user(
+    token: str | None = Cookie(default=None, alias="pyyt_session"),
+    db: Session = Depends(get_db),
+) -> User | None:
+    if not token:
+        return None
+    user_id = decode_access_token(token)
+    if not user_id:
+        return None
+    user = db.get(User, user_id)
+    return user if user and user.is_active else None
