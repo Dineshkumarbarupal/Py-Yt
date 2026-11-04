@@ -28,12 +28,22 @@ def list_reports(
     rows = db.execute(
         statement.order_by(desc(ContentReport.created_at)).offset(offset).limit(limit)
     ).all()
-    return {
-        "items": [
+    items = []
+    for report, reporter in rows:
+        target_url = "/admin/moderation"
+        if report.target_type == "video":
+            target_url = f"/watch/{report.target_id}"
+        elif report.target_type == "comment":
+            comment = db.get(Comment, report.target_id)
+            video = db.get(Video, comment.video_id) if comment else None
+            if video:
+                target_url = f"/watch/{video.id}#comment-{report.target_id}"
+        items.append(
             {
                 "id": report.id,
                 "target_type": report.target_type,
                 "target_id": report.target_id,
+                "target_url": target_url,
                 "reason": report.reason,
                 "details": report.details,
                 "status": report.status,
@@ -41,9 +51,8 @@ def list_reports(
                 "created_at": report.created_at,
                 "resolution_note": report.resolution_note,
             }
-            for report, reporter in rows
-        ]
-    }
+        )
+    return {"items": items}
 
 class ReportReview(BaseModel):
     status: str = Field(pattern="^(reviewing|actioned|dismissed)$")
