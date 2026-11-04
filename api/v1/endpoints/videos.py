@@ -16,6 +16,7 @@ class VideoCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str = Field(default="", max_length=10000)
     category: str = Field(default="General", pattern="^(General|Music|Gaming|Technology|Learning|Live|Comedy|Sports|News|Entertainment)$")
+    video_format: str = Field(default="standard", pattern="^(standard|short)$")
     source_url: HttpUrl | None = None
     thumbnail_url: HttpUrl | None = None
 
@@ -26,6 +27,7 @@ class VideoUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=10000)
     category: str | None = Field(default=None, pattern="^(General|Music|Gaming|Technology|Learning|Live|Comedy|Sports|News|Entertainment)$")
+    video_format: str | None = Field(default=None, pattern="^(standard|short)$")
     visibility: str | None = Field(default=None, pattern="^(public|unlisted|private)$")
 
 def _public_query():
@@ -47,7 +49,7 @@ def list_videos(
     rows = db.execute(statement.order_by(desc(Video.published_at), desc(Video.created_at)).offset(offset).limit(limit)).all()
     return {"items": [
         {"id": v.id, "title": v.title, "description": v.description, "category": v.category, "thumbnail_url": v.thumbnail_url,
-         "duration_seconds": v.duration_seconds, "view_count": v.view_count, "channel_id": c.id,
+         "duration_seconds": v.duration_seconds, "video_format": v.video_format, "view_count": v.view_count, "channel_id": c.id,
          "channel_name": c.name, "channel_handle": c.handle, "published_at": v.published_at}
         for v, c, _owner in rows
     ], "limit": limit, "offset": offset}
@@ -69,6 +71,7 @@ def create_video(payload: VideoCreate, db: Session = Depends(get_db), user: User
         channel_id=channel.id, title=payload.title.strip(), description=payload.description.strip(),
         source_url=str(payload.source_url) if payload.source_url else None,
         category=payload.category,
+        video_format=payload.video_format,
         thumbnail_url=str(payload.thumbnail_url) if payload.thumbnail_url else None,
         status="draft", visibility="private",
     )
@@ -87,7 +90,7 @@ def get_video(video_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Video not found.")
     return {"id": video.id, "title": video.title, "description": video.description,
             "source_url": video.source_url, "thumbnail_url": video.thumbnail_url,
-            "duration_seconds": video.duration_seconds, "view_count": video.view_count,
+            "duration_seconds": video.duration_seconds, "video_format": video.video_format, "view_count": video.view_count,
             "channel": {"id": channel.id, "name": channel.name, "handle": channel.handle}}
 
 @router.patch("/{video_id}")
