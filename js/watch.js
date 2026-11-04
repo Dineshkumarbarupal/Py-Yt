@@ -68,8 +68,23 @@ async function loadUpNext() {
 }
 
 player?.addEventListener("ended", () => {
-  if (!autoplayToggle?.checked || !nextVideos.length) return;
-  window.location.assign(`/watch/${encodeURIComponent(nextVideos[0].id)}`);
+  if (!autoplayToggle?.checked) return;
+  let queue = [];
+  try {
+    queue = JSON.parse(sessionStorage.getItem("pyyt_watch_queue") || "[]");
+  } catch {
+    queue = [];
+  }
+  queue = Array.isArray(queue) ? queue.filter((item) => item && item.id && item.id !== videoId) : [];
+  if (queue.length) {
+    const nextQueued = queue[0];
+    sessionStorage.setItem("pyyt_watch_queue", JSON.stringify(queue.slice(1)));
+    window.location.assign(`/watch/${encodeURIComponent(nextQueued.id)}`);
+    return;
+  }
+  if (nextVideos.length) {
+    window.location.assign(`/watch/${encodeURIComponent(nextVideos[0].id)}`);
+  }
 });
 
 
