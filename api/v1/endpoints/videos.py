@@ -19,6 +19,7 @@ class VideoCreate(BaseModel):
 class VideoUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=10000)
+    category: str | None = Field(default=None, pattern="^(General|Music|Gaming|Technology|Learning|Live|Comedy|Sports|News|Entertainment)$")
     visibility: str | None = Field(default=None, pattern="^(public|unlisted|private)$")
 
 def _public_query():
@@ -71,7 +72,7 @@ def create_video(payload: VideoCreate, db: Session = Depends(get_db), user: User
     return video
 
 @router.get("/{video_id}")
-def get_video(video_id: str, db: Session = Depends(get_db), user: User | None = None):
+def get_video(video_id: str, db: Session = Depends(get_db)):
     row = db.execute(select(Video, Channel).join(Channel, Video.channel_id == Channel.id).where(Video.id == video_id)).first()
     if not row:
         raise HTTPException(status_code=404, detail="Video not found.")
@@ -111,7 +112,7 @@ def publish_video(video_id: str, db: Session = Depends(get_db), user: User = Dep
     return {"id": video.id, "status": video.status, "visibility": video.visibility}
 
 @router.post("/{video_id}/view")
-def record_view(video_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def record_view(video_id: str, db: Session = Depends(get_db)):
     video = db.get(Video, video_id)
     if not video or video.status != "published" or video.visibility != "public":
         raise HTTPException(status_code=404, detail="Video not found.")
