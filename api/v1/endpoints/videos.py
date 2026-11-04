@@ -12,6 +12,7 @@ router = APIRouter(prefix="/videos")
 class VideoCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str = Field(default="", max_length=10000)
+    category: str = Field(default="General", pattern="^(General|Music|Gaming|Technology|Learning|Live|Comedy|Sports|News|Entertainment)$")
     source_url: HttpUrl | None = None
     thumbnail_url: HttpUrl | None = None
 
@@ -38,7 +39,7 @@ def list_videos(
         statement = statement.where(or_(Video.title.ilike(pattern), Video.description.ilike(pattern), Channel.name.ilike(pattern)))
     rows = db.execute(statement.order_by(desc(Video.published_at), desc(Video.created_at)).offset(offset).limit(limit)).all()
     return {"items": [
-        {"id": v.id, "title": v.title, "description": v.description, "thumbnail_url": v.thumbnail_url,
+        {"id": v.id, "title": v.title, "description": v.description, "category": v.category, "thumbnail_url": v.thumbnail_url,
          "duration_seconds": v.duration_seconds, "view_count": v.view_count, "channel_id": c.id,
          "channel_name": c.name, "channel_handle": c.handle, "published_at": v.published_at}
         for v, c, _owner in rows
@@ -60,6 +61,7 @@ def create_video(payload: VideoCreate, db: Session = Depends(get_db), user: User
     video = Video(
         channel_id=channel.id, title=payload.title.strip(), description=payload.description.strip(),
         source_url=str(payload.source_url) if payload.source_url else None,
+        category=payload.category,
         thumbnail_url=str(payload.thumbnail_url) if payload.thumbnail_url else None,
         status="draft", visibility="private",
     )
