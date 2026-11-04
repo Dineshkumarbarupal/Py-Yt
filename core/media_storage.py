@@ -21,20 +21,23 @@ def client():
         config=Config(signature_version="s3v4"),
     )
 
-def create_upload_form(object_key: str, content_type: str, file_size_bytes: int) -> dict:
-    return client().generate_presigned_post(
-        Bucket=settings.media_bucket,
-        Key=object_key,
-        Fields={"Content-Type": content_type},
-        Conditions=[
-            {"Content-Type": content_type},
-            ["content-length-range", file_size_bytes, file_size_bytes],
-        ],
+def create_upload_url(object_key: str, content_type: str) -> str:
+    return client().generate_presigned_url(
+        "put_object",
+        Params={
+            "Bucket": settings.media_bucket,
+            "Key": object_key,
+            "ContentType": content_type,
+        },
         ExpiresIn=900,
+        HttpMethod="PUT",
     )
 
 def inspect_uploaded_object(object_key: str) -> dict:
     return client().head_object(Bucket=settings.media_bucket, Key=object_key)
+
+def delete_object(object_key: str) -> None:
+    client().delete_object(Bucket=settings.media_bucket, Key=object_key)
 
 def create_playback_url(object_key: str, expires_in: int = 600) -> str:
     return client().generate_presigned_url(
