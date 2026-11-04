@@ -1,0 +1,123 @@
+from db.models import Channel, Video
+from db.session import SessionLocal
+
+
+def register(client, email, name):
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "display_name": name,
+            "password": "A-very-strong-test-password-9",
+        },
+    )
+    assert response.status_code == 201
+    return response.json()
+
+
+def create_public_video(owner):
+    with SessionLocal() as db:
+        channel = db.query(Channel).filter(Channel.owner_id == owner["id"]).one()
+        video = Video(
+            channel_id=channel.id,
+            title="Python tutorial",
+            description="Learn Python",
+            category="Learning",
+            source_type="upload",
+            storage_key=f"test/{owner['id']}/video.mp4",
+            mime_type="video/mp4",
+            file_size_bytes=120,
+            visibility="public",
+            status="published",
+        )
+        db.add(video)
+        db.commit()
+        db.refresh(video)
+        return video.id, channel.id
+
+
+def test_watch_later_and_liked_library(client):
+    owner = register(client, "viewer-owner@example.com", "Video Owner")
+    video_id, _ = create_public_video(owner)
+
+    viewer_client = client
+    saved = viewer_client.post(f"/api/v1/library/watch-later/{video_id}", headers={
+        "X-CSRF-Token": viewer_client.cookies.get("pyyt_csrf")
+    })
+    assert saved.status_code == 201
+    assert saved.json()["status"] == "saved"
+
+    later = viewer_client.get("/api/v1/library/watch-later")
+    assert later.status_code == 200
+    assert [item["id"] for item in later.json()["items"]] == [video_id]
+
+    liked = viewer_client.put(
+        f"/api/v1/engagement/videos/{video_id}/reaction",
+        json={"reaction": "like"},
+        headers={"X-CSRF-Token": viewer_client.cookies.get("pyyt_csrf")},
+    )
+    assert liked.status_code == 200
+    liked_list = viewer_client.get("/api/v1/library/liked")
+    assert liked_list.status_code == 200
+    assert [item["id"] for item in liked_list.json()["items"]] == [video_id]
+
+    removed = viewer_client.delete(
+        f"/api/v1/library/watch-later/{video_id}",
+        headers={"X-CSRF-Token": viewer_client.cookies.get("pyyt_csrf")},
+    )
+    assert removed.status_code == 204
+
+
+def test_playlist_create_and_visibility(client):
+    owner = register(client, "playlist-owner@example.com", "Playlist Owner")
+    video_id, _ = create_public_video(owner)
+    csrf = client.cookies.get("pyyt_csrf")
+
+    created = client.post(
+        "/api/v1/playlists",
+        json={"title": "My Learning List", "visibility": "public"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert created.status_code == 201
+    playlist_id = created.json()["id"]
+
+    added = client.post(
+        f"/api/v1/playlists/{playlist_id}/items",
+        json={"video_id": video_id},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert added.status_code == 201
+
+    detail = client.get(f"/api/v1/playlists/{playlist_id}")
+    assert detail.status_code == 200
+    assert detail.json()["items"][0]["video_id"] == video_id
+
+
+def test_subscription_lifecycle(client):
+    first = register(client, "subscriber@example.com", "Subscriber")
+    csrf = client.cookies.get("pyyt_csrf")
+    second_client = client
+    second_client.post("/api/v1/auth/logout", headers={"X-CSRF-Token": csrf})
+
+    second = register(second_client, "creator@example.com", "Creator Two")
+    with SessionLocal() as db:
+        channel = db.query(Channel).filter(Channel.owner_id == second["id"]).one()
+        channel_id = channel.id
+
+    # Sign back in as the subscriber.
+    second_client.post("/api/v1/auth/logout", headers={"X-CSRF-Token": second_client.cookies.get("pyyt_csrf")})
+    login = second_client.post(
+        "/api/v1/auth/login",
+        json={"email": first["email"], "password": "A-very-strong-test-password-9"},
+    )
+    assert login.status_code == 200
+
+    csrf = second_client.cookies.get("pyyt_csrf")
+    subscribed = second_client.post(
+        f"/api/v1/subscriptions/{channel_id}",
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert subscribed.status_code == 201
+    listing = second_client.get("/api/v1/subscriptions")
+    assert listing.status_code == 200
+    assert listing.json()["items"][0]["channel_id"] == channel_id
