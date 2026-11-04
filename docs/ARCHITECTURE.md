@@ -19,7 +19,7 @@ Py-Yt starts as a modular monolith. A single FastAPI deployment exposes versione
 
 ## Request and data flow
 
-Browser HTML/CSS/ES modules -> HTTPS -> FastAPI /api/v1 -> Pydantic validation -> domain logic -> SQLAlchemy -> MySQL.
+Browser HTML/CSS/ES modules -> HTTPS -> FastAPI /api/v1 routers -> Pydantic validation -> services/ use cases -> SQLAlchemy queries -> MySQL.
 
 Video bytes bypass the API server: browser -> short-lived S3-compatible presigned PUT -> object storage. The API verifies uploaded-object size and MIME metadata after transfer. Playback uses short-lived signed GET URLs after checking video visibility and ownership.
 
