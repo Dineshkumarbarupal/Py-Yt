@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from db.models import Comment, User, Video
+from db.models import Channel, Comment, User, Video
+from services.notifications import notify
 from db.session import get_db
 from core.dependencies import get_current_user
 
@@ -53,6 +54,25 @@ def create_comment(payload: CommentCreate, db: Session = Depends(get_db), user: 
         parent_comment_id=payload.parent_comment_id,
     )
     db.add(comment)
+    channel = db.get(Channel, video.channel_id)
+    recipient_ids = {channel.owner_id} if channel else set()
+    parent = db.get(Comment, payload.parent_comment_id) if payload.parent_comment_id else None
+    if parent:
+        recipient_ids.add(parent.user_id)
+    for recipient_id in recipient_ids:
+        notify(
+            db,
+            recipient_id=recipient_id,
+            actor_id=user.id,
+            notification_type="new_comment" if not parent else "comment_reply",
+            entity_type="video",
+            entity_id=video.id,
+            message=(
+                f"{user.display_name} replied to your comment on {video.title}."
+                if parent and recipient_id == parent.user_id
+                else f"{user.display_name} commented on your video: {video.title}"
+            ),
+        )
     db.commit()
     db.refresh(comment)
     return {
