@@ -180,6 +180,11 @@ async def public_channel_page(request: Request, handle: str):
         context={"channel": channel, "videos": videos},
     )
 
+@app.get("/account", include_in_schema=False)
+async def account_page():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/settings", status_code=303)
+
 @app.get("/channel", include_in_schema=False)
 async def own_channel(request: Request, user: User | None = Depends(get_optional_user)):
     if not user:
