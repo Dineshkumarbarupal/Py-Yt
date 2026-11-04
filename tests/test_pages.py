@@ -29,3 +29,42 @@ def test_public_channel_page_and_own_channel_redirect(client):
     public_page = client.get(f"/@{handle}")
     assert public_page.status_code == 200
     assert "Page Owner" in public_page.text
+
+
+def test_watch_page_exposes_player_controls_and_comment_threads(client):
+    registration = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "watch-page@example.com",
+            "display_name": "Watch Page Owner",
+            "password": "A-very-strong-test-password-18",
+        },
+    )
+    assert registration.status_code == 201
+    from db.models import Channel, Video
+    from db.session import SessionLocal
+    with SessionLocal() as db:
+        channel = db.query(Channel).filter(Channel.owner_id == registration.json()["id"]).one()
+        video = Video(
+            channel_id=channel.id,
+            title="Player controls test",
+            description="",
+            category="Learning",
+            source_type="upload",
+            storage_key=f"watch-page/{registration.json()['id']}/video.mp4",
+            mime_type="video/mp4",
+            file_size_bytes=1024,
+            visibility="public",
+            status="published",
+        )
+        db.add(video)
+        db.commit()
+        video_id = video.id
+
+    response = client.get(f"/watch/{video_id}")
+    assert response.status_code == 200
+    assert 'id="player-speed"' in response.text
+    assert 'id="theater-toggle"' in response.text
+    assert 'id="pip-toggle"' in response.text
+    assert 'id="dislike-button"' in response.text
+    assert 'id="share-button"' in response.text
