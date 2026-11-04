@@ -45,7 +45,7 @@ function render(items) {
     title.setAttribute("aria-label", "Video title");
     const meta = document.createElement("p");
     meta.className = "muted";
-    meta.textContent = `${video.status} · ${Number(video.view_count || 0).toLocaleString()} views`;
+    meta.textContent = `${video.status} · ${video.video_format === "short" ? "Shorts" : "Standard"} · ${Number(video.view_count || 0).toLocaleString()} views`;
     info.append(title, meta);
 
     const category = selectControl("studio-category", categories, video.category || "General");
