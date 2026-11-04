@@ -49,6 +49,9 @@ OpenAPI documentation is available at /docs in non-production environments.
 | GET | /api/v1/studio/analytics | Basic view totals and top videos |
 | GET | /api/v1/studio/comments | Comments on creator-owned videos |
 | PATCH | /api/v1/studio/comments/{comment_id} | Hide/restore a comment on creator-owned video |
+| POST | /api/v1/reports | Report a public video or visible comment |
+| GET | /api/v1/admin/reports | Admin-only moderation queue |
+| PATCH | /api/v1/admin/reports/{report_id} | Admin action or dismiss a report |
 | GET | /api/v1/notifications | Current user's notifications and unread count |
 | POST | /api/v1/notifications/{notification_id}/read | Mark one notification as read |
 | POST | /api/v1/notifications/read-all | Mark all current user's notifications as read |
