@@ -7,8 +7,8 @@
 - Double-submit CSRF cookie/header check for unsafe methods when a session cookie is present.
 - Pydantic request validation and SQLAlchemy parameterized operations.
 - Server-generated video object keys.
-- Presigned upload constraints for supported MIME types and exact file size.
-- Upload completion checks storage ContentLength and ContentType.
+- Presigned PUT URLs for supported video MIME types.
+- Upload completion checks storage ContentLength and ContentType; mismatched uploaded objects are rejected and deletion is attempted.
 - Private video playback requires channel-owner identity and returns an expiring signed URL.
 - Basic response security headers.
 
@@ -27,7 +27,7 @@
 - Add content reporting, moderation, copyright and privacy/legal workflows.
 
 ## Media safety
-Browser MIME headers are not proof of actual file contents. Production must inspect file signatures and scan/transcode uploaded files in a worker before allowing public playback. A successful object upload is not proof that a video is safe to distribute.
+The presign API validates the declared file size against the configured maximum, then verifies the uploaded object's actual ContentLength and ContentType. With presigned PUT, a malicious client may still attempt a larger transfer before completion rejects it; production must add upload-rate limits, abuse controls and storage-cost monitoring. Browser MIME headers are not proof of file contents. Production must inspect file signatures and scan/transcode uploaded files in a worker before allowing public playback.
 
 ## Trust boundaries
 Treat titles, descriptions, comments, thumbnails, external URLs and provider metadata as untrusted. Escape them on output, restrict server-side outbound URL fetches and add SSRF controls to any future URL preview feature.
