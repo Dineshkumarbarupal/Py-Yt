@@ -1,7 +1,8 @@
 # Security Notes
 
 ## Implemented foundations
-- Argon2 password hashing.
+- Argon2 password hashing and current-password verification for password changes.
+- Profile/avatar URL validation using HTTP(S) URLs.
 - Signed expiring JWT in an HttpOnly cookie.
 - SameSite cookie policy and production secure-cookie setting.
 - Double-submit CSRF cookie/header check for unsafe methods when a session cookie is present.
@@ -19,7 +20,7 @@
 - Restrict CORS to known frontend origins; do not use wildcard origins with credentials.
 - Configure a scoped object-storage key, bucket CORS, encryption and lifecycle.
 - Add per-user/IP rate limits for login, comments, subscriptions, upload presign and view endpoints.
-- Add email verification, password reset and MFA/passkeys before public launch.
+- Add email verification, password reset, MFA/passkeys and session revocation on password change before public launch.
 - Add ownership and role checks to every new API.
 - Add upload signature validation, malware/content scanning and media transcoding before public publication.
 - Add request IDs, audit logs, alerting and secret redaction.
