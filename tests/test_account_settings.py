@@ -60,6 +60,7 @@ def test_password_change_requires_current_password_and_new_password_works(client
     )
     assert wrong_current.status_code == 400
 
+    old_session = client.cookies.get("pyyt_session")
     changed = client.post(
         "/api/v1/auth/change-password",
         json={
@@ -69,6 +70,13 @@ def test_password_change_requires_current_password_and_new_password_works(client
         headers={"X-CSRF-Token": csrf},
     )
     assert changed.status_code == 204
+    new_session = client.cookies.get("pyyt_session")
+    assert new_session and new_session != old_session
+
+    client.cookies.set("pyyt_session", old_session)
+    assert client.get("/api/v1/auth/me").status_code == 401
+    client.cookies.set("pyyt_session", new_session)
+    assert client.get("/api/v1/auth/me").status_code == 200
 
     csrf = client.cookies.get("pyyt_csrf")
     client.post("/api/v1/auth/logout", headers={"X-CSRF-Token": csrf})
