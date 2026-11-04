@@ -5,7 +5,7 @@ from sqlalchemy import desc, or_, select
 from sqlalchemy.orm import Session
 from db.models import Channel, Video, User
 from db.session import get_db
-from py.dependencies import get_current_user
+from core.dependencies import get_current_user
 
 router = APIRouter(prefix="/videos")
 
