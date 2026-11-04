@@ -11,7 +11,7 @@ router = APIRouter(prefix="/studio")
 
 @router.get("/overview")
 def overview(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    channel = get_owned_channel(db, user)
+    channel = getget_owned_channel(db, user)
     published_count = db.scalar(
         select(func.count(Video.id)).where(Video.channel_id == channel.id, Video.status == "published")
     ) or 0
@@ -45,7 +45,7 @@ def creator_videos(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    channel = _owned_channel(db, user)
+    channel = get_owned_channel(db, user)
     videos = db.scalars(
         select(Video)
         .where(Video.channel_id == channel.id)
@@ -74,7 +74,7 @@ def creator_videos(
 
 @router.get("/analytics")
 def creator_analytics(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    channel = _owned_channel(db, user)
+    channel = get_owned_channel(db, user)
     videos = db.execute(
         select(Video.id, Video.title, Video.view_count, Video.published_at)
         .where(Video.channel_id == channel.id, Video.status == "published")
@@ -101,7 +101,7 @@ def creator_comments(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    channel = _owned_channel(db, user)
+    channel = get_owned_channel(db, user)
     rows = db.execute(
         select(Comment, Video, User)
         .join(Video, Comment.video_id == Video.id)
@@ -135,7 +135,7 @@ def moderate_comment(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    channel = _owned_channel(db, user)
+    channel = get_owned_channel(db, user)
     row = db.execute(
         select(Comment, Video)
         .join(Video, Comment.video_id == Video.id)
