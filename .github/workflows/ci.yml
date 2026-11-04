@@ -1,5 +1,9 @@
 name: Py-Yt CI
 
+concurrency:
+  group: py-yt-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main, "phase-*"]
