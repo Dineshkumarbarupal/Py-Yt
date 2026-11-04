@@ -10,10 +10,11 @@ The original repository was empty. A modular FastAPI/MySQL web foundation has no
 - Modular FastAPI application and versioned REST API.
 - HTML templates, reusable components, responsive CSS and ES-module JavaScript.
 - MySQL SQLAlchemy models and Alembic migrations for users, channels, videos, playlists, subscriptions, reactions, comments and watch history.
-- Registration/login/logout/current-user APIs with Argon2 password hashing and cookie-based JWT sessions; profile editing and verified-current-password updates.
+- Registration/login/logout/current-user APIs with Argon2 password hashing and cookie-based JWT sessions; profile, avatar and password settings with current-password verification.
 - Channel profile APIs, public video catalog/search/feed and category filtering.
-- Playlist creation/list/detail, channel subscriptions and a latest-from-subscriptions feed, comments, reactions, Watch Later, history and watch-progress APIs.
+- Playlist creation/list/detail, channel subscriptions and a latest-from-subscriptions feed, comments, reactions, Watch Later, history, watch progress and in-app notifications.
 - Creator Studio overview, creator-owned content list, basic video analytics and comment hide/restore workflows.
+- In-app notifications for new public uploads, new subscribers, comments and comment replies, with unread counters and mark-read actions.
 - Presigned direct-to-S3-compatible video upload, object metadata verification and expiring signed playback URLs.
 - Dockerfile, Docker Compose, Nginx configuration and GitHub Actions CI workflow.
 - Architecture, feature roadmap, API, security, development and deployment documentation.
