@@ -20,9 +20,8 @@ function render(items) {
     return;
   }
   for (const playlist of items) {
-    const card = document.createElement("a");
+    const card = document.createElement("article");
     card.className = "playlist-tile";
-    card.href = `/playlist/${encodeURIComponent(playlist.id)}`;
     const icon = document.createElement("span");
     icon.className = "playlist-tile-icon";
     icon.textContent = "▤";
@@ -31,7 +30,46 @@ function render(items) {
     const description = document.createElement("p");
     description.className = "muted";
     description.textContent = playlist.description || playlist.visibility;
-    card.append(icon, title, description);
+    const open = document.createElement("a");
+    open.href = `/playlist/${encodeURIComponent(playlist.id)}`;
+    open.className = "playlist-open-link";
+    open.textContent = "Open playlist";
+    const actions = document.createElement("div");
+    actions.className = "playlist-tile-actions";
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.className = "secondary-button";
+    edit.textContent = "Edit";
+    edit.addEventListener("click", async () => {
+      const nextTitle = window.prompt("Playlist title", playlist.title);
+      if (nextTitle === null) return;
+      const nextDescription = window.prompt("Playlist description", playlist.description || "");
+      if (nextDescription === null) return;
+      try {
+        await apiRequest(`/playlists/${encodeURIComponent(playlist.id)}`, {
+          method: "PATCH",
+          body: JSON.stringify({ title: nextTitle, description: nextDescription }),
+        });
+        await load();
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    });
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "secondary-button danger-button";
+    remove.textContent = "Delete";
+    remove.addEventListener("click", async () => {
+      if (!window.confirm(`Delete playlist “${playlist.title}”?`)) return;
+      try {
+        await apiRequest(`/playlists/${encodeURIComponent(playlist.id)}`, { method: "DELETE" });
+        await load();
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    });
+    actions.append(edit, remove);
+    card.append(icon, title, description, open, actions);
     list.append(card);
   }
 }
