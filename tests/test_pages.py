@@ -68,3 +68,5 @@ def test_watch_page_exposes_player_controls_and_comment_threads(client):
     assert 'id="pip-toggle"' in response.text
     assert 'id="dislike-button"' in response.text
     assert 'id="share-button"' in response.text
+    assert 'id="autoplay-toggle"' in response.text
+    assert 'id="up-next-list"' in response.text
