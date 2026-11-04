@@ -1,27 +1,117 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from starlette.middleware.cors import CORSMiddleware
+from sqlalchemy import desc, select
 from config.settings import settings
 from api.v1.router import api_router
 from core.logging import configure_logging
+from db.models import Channel, Video
+from db.session import SessionLocal
+from middleware.security import CSRFMiddleware
 
 configure_logging()
+templates = Jinja2Templates(directory="template")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Schema changes are applied through Alembic, never by implicit table creation here.
+    # Run Alembic migrations as a controlled deployment/release step, not on every worker startup.
     yield
 
-app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
-app.mount("/static", StaticFiles(directory="asset"), name="static")
+app = FastAPI(
+    title=settings.app_name,
+    version="0.1.0",
+    lifespan=lifespan,
+    docs_url="/docs" if settings.app_env != "production" else None,
+    redoc_url=None,
+)
+app.add_middleware(CSRFMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origin_list,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-CSRF-Token"],
+)
+app.mount("/assets", StaticFiles(directory="asset"), name="assets")
+app.mount("/css", StaticFiles(directory="css"), name="css")
+app.mount("/js", StaticFiles(directory="js"), name="js")
 app.include_router(api_router, prefix="/api/v1")
 
 @app.get("/health", tags=["health"])
 async def health():
     return {"status": "ok", "service": settings.app_name}
 
-@app.get("/", response_class=HTMLResponse, include_in_schema=False)
-async def home():
-    from pathlib import Path
-    return HTMLResponse(Path("template/index.html").read_text(encoding="utf-8"))
+@app.get("/", include_in_schema=False)
+async def home(request: Request):
+    with SessionLocal() as db:
+        rows = db.execute(
+            select(Video, Channel)
+            .join(Channel, Video.channel_id == Channel.id)
+            .where(Video.status == "published", Video.visibility == "public")
+            .order_by(desc(Video.published_at), desc(Video.created_at))
+            .limit(24)
+        ).all()
+        videos = [
+            {
+                "id": video.id,
+                "title": video.title,
+                "thumbnail_url": video.thumbnail_url,
+                "duration": None,
+                "channel_name": channel.name,
+                "channel_initial": channel.name[:1].upper(),
+                "view_label": f"{video.view_count:,} views",
+                "published_label": video.published_at.strftime("%b %d, %Y") if video.published_at else "",
+            }
+            for video, channel in rows
+        ]
+    return templates.TemplateResponse(request=request, name="index.html", context={"videos": videos})
+
+@app.get("/login", include_in_schema=False)
+async def login_page(request: Request):
+    return templates.TemplateResponse(request=request, name="login.html", context={})
+
+@app.get("/signup", include_in_schema=False)
+async def signup_page(request: Request):
+    return templates.TemplateResponse(request=request, name="signup.html", context={})
+
+@app.get("/studio", include_in_schema=False)
+async def studio_page(request: Request):
+    return templates.TemplateResponse(request=request, name="studio.html", context={})
+
+@app.get("/watch/{video_id}", include_in_schema=False)
+async def watch_page(request: Request, video_id: str):
+    with SessionLocal() as db:
+        row = db.execute(
+            select(Video, Channel)
+            .join(Channel, Video.channel_id == Channel.id)
+            .where(Video.id == video_id, Video.status == "published", Video.visibility == "public")
+        ).first()
+    if not row:
+        return templates.TemplateResponse(request=request, name="section.html", status_code=404, context={
+            "title": "Video unavailable",
+            "description": "This video does not exist, is private or has not been published.",
+        })
+    video, channel = row
+    return templates.TemplateResponse(request=request, name="watch.html", context={"video": video, "channel": channel})
+
+@app.get("/{section}", include_in_schema=False)
+async def section_page(request: Request, section: str):
+    sections = {
+        "shorts": ("Shorts", "Vertical short-form video discovery will be enabled with the media pipeline."),
+        "subscriptions": ("Subscriptions", "Sign in and subscribe to channels to build your feed."),
+        "history": ("History", "Your watch history will appear here when watch tracking is enabled."),
+        "playlists": ("Playlists", "Create and organize playlists from your library."),
+        "watch-later": ("Watch later", "Save videos to watch them later."),
+        "liked": ("Liked videos", "Videos you have liked will appear here."),
+        "settings": ("Settings", "Manage profile, privacy, notifications and playback preferences."),
+        "account": ("Your account", "Sign in to manage your Py-Yt account."),
+        "notifications": ("Notifications", "Creator and channel updates will appear here."),
+        "help": ("Help & feedback", "Help documentation and feedback tools are being prepared."),
+    }
+    if section not in sections:
+        return JSONResponse({"detail": "Not found."}, status_code=404)
+    title, description = sections[section]
+    return templates.TemplateResponse(request=request, name="section.html", context={"title": title, "description": description})
