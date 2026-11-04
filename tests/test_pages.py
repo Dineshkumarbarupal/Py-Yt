@@ -6,7 +6,7 @@ def test_creator_studio_pages_render(client):
 
 
 def test_viewer_library_pages_render(client):
-    for path in ["/subscriptions", "/playlists", "/watch-later", "/liked", "/history"]:
+    for path in ["/subscriptions", "/playlists", "/watch-later", "/liked", "/history", "/settings"]:
         response = client.get(path)
         assert response.status_code == 200, path
         assert "Py-Yt" in response.text, path
