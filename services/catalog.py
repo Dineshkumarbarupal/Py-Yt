@@ -7,6 +7,7 @@ def serialize_public_video(video: Video, channel: Channel) -> dict:
         "id": video.id,
         "title": video.title,
         "category": video.category,
+        "video_format": video.video_format,
         "thumbnail_url": video.thumbnail_url,
         "duration_seconds": video.duration_seconds,
         "view_count": video.view_count,
@@ -53,5 +54,21 @@ def search_public_videos(
         statement = statement.where(Video.category == category)
     rows = db.execute(
         statement.order_by(desc(Video.published_at), desc(Video.created_at)).offset(offset).limit(limit)
+    ).all()
+    return [serialize_public_video(video, channel) for video, channel in rows]
+
+
+def public_shorts(db: Session, limit: int = 20, offset: int = 0) -> list[dict]:
+    rows = db.execute(
+        select(Video, Channel)
+        .join(Channel, Video.channel_id == Channel.id)
+        .where(
+            Video.status == "published",
+            Video.visibility == "public",
+            Video.video_format == "short",
+        )
+        .order_by(desc(Video.published_at), desc(Video.created_at))
+        .offset(offset)
+        .limit(limit)
     ).all()
     return [serialize_public_video(video, channel) for video, channel in rows]
