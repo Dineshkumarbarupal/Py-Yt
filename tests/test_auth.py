@@ -34,7 +34,12 @@ def test_duplicate_registration_is_rejected(client):
         "password": "A-very-strong-test-password-2",
     }
     assert client.post("/api/v1/auth/register", json=payload).status_code == 201
-    duplicate = client.post("/api/v1/auth/register", json=payload)
+    csrf = client.cookies.get("pyyt_csrf")
+    duplicate = client.post(
+        "/api/v1/auth/register",
+        json=payload,
+        headers={"X-CSRF-Token": csrf},
+    )
     assert duplicate.status_code == 409
 
 def test_csrf_is_required_for_authenticated_mutations(client):
