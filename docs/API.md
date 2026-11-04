@@ -28,13 +28,15 @@ OpenAPI documentation is available at /docs in non-production environments.
 | GET | /api/v1/discovery/shorts | Latest public Shorts feed |
 | GET | /api/v1/playlists/mine | Current user's playlists |
 | POST | /api/v1/playlists | Create playlist |
-| GET | /api/v1/playlists/{playlist_id} | Read accessible playlist |
+| GET/PATCH/DELETE | /api/v1/playlists/{playlist_id} | Read, edit or delete owned playlist |
 | POST | /api/v1/playlists/{playlist_id}/items | Add video to playlist |
+| DELETE | /api/v1/playlists/{playlist_id}/items/{video_id} | Remove video from owned playlist |
 | GET | /api/v1/subscriptions | List subscriptions |
 | GET | /api/v1/subscriptions/feed | Latest public videos from subscribed channels |
 | POST/DELETE | /api/v1/subscriptions/{channel_id} | Subscribe/unsubscribe |
 | GET | /api/v1/comments/video/{video_id} | List public video comments |
 | POST | /api/v1/comments | Create comment/reply |
+| GET | /api/v1/engagement/videos/{video_id}/reaction | Like/dislike totals and current viewer reaction |
 | PUT/DELETE | /api/v1/engagement/videos/{video_id}/reaction | Like/dislike or remove reaction |
 | POST | /api/v1/engagement/videos/{video_id}/history | Save watch progress |
 | GET | /api/v1/engagement/history | Current user's watch history |
