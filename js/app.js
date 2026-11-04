@@ -82,7 +82,7 @@ function renderVideos(items, emptyMessage = "No videos found.") {
 async function loadFeed(category = "All") {
   activeCategory = category;
   const heading = feed?.querySelector("h2");
-  if (heading) heading.textContent = category === "All" ? "Recommended for you" : category;
+  if (heading) heading.textContent = category === "All" ? "Latest videos" : category;
   const result = await apiRequest(`/discovery/feed?category=${encodeURIComponent(category)}`);
   renderVideos(result.items, "No published videos are available in this category yet.");
 }
