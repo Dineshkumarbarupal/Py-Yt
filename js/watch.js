@@ -18,6 +18,61 @@ let reportTarget = { type: "video", id: videoId };
 let lastSavedSecond = -1;
 let viewRecorded = false;
 
+
+const upNextList = document.querySelector("#up-next-list");
+const autoplayToggle = document.querySelector("#autoplay-toggle");
+let nextVideos = [];
+
+async function loadUpNext() {
+  if (!upNextList) return;
+  try {
+    const result = await apiRequest("/discovery/feed?category=All&limit=12");
+    nextVideos = (result.items || []).filter((item) => item.id !== videoId).slice(0, 8);
+    upNextList.replaceChildren();
+    if (!nextVideos.length) {
+      const empty = document.createElement("p");
+      empty.className = "muted";
+      empty.textContent = "No more videos are available yet.";
+      upNextList.append(empty);
+      return;
+    }
+    for (const item of nextVideos) {
+      const card = document.createElement("a");
+      card.className = "up-next-card";
+      card.href = `/watch/${encodeURIComponent(item.id)}`;
+      if (item.thumbnail_url) {
+        const image = document.createElement("img");
+        image.src = item.thumbnail_url;
+        image.alt = "";
+        image.loading = "lazy";
+        card.append(image);
+      } else {
+        const placeholder = document.createElement("span");
+        placeholder.className = "up-next-placeholder";
+        placeholder.textContent = "▶";
+        card.append(placeholder);
+      }
+      const copy = document.createElement("span");
+      copy.className = "up-next-copy";
+      const title = document.createElement("strong");
+      title.textContent = item.title;
+      const channel = document.createElement("small");
+      channel.textContent = item.channel_name || "Creator";
+      copy.append(title, channel);
+      card.append(copy);
+      upNextList.append(card);
+    }
+  } catch (error) {
+    upNextList.textContent = error.message;
+  }
+}
+
+player?.addEventListener("ended", () => {
+  if (!autoplayToggle?.checked || !nextVideos.length) return;
+  window.location.assign(`/watch/${encodeURIComponent(nextVideos[0].id)}`);
+});
+
+
 function toast(message) {
   let region = document.querySelector("#toast-region");
   if (!region) {
@@ -360,3 +415,4 @@ reportForm?.addEventListener("submit", async (event) => {
 
 initializePlayer();
 loadComments();
+loadUpNext();
