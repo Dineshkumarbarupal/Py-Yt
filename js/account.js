@@ -20,6 +20,8 @@ try {
     avatar.title = user.display_name || user.email;
     avatar.setAttribute("aria-label", "Account settings");
   }
+  const adminLink = document.querySelector("#admin-link");
+  if (adminLink && user.role === "admin") adminLink.classList.remove("hidden");
   if (notificationLink) {
     const result = await apiRequest("/notifications?limit=1");
     if (result.unread_count > 0) {
