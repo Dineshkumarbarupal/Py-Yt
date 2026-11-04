@@ -5,7 +5,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 from db.models import Video, VideoReaction, WatchHistory, User
 from db.session import get_db
-from py.dependencies import get_current_user
+from core.dependencies import get_current_user
 
 router = APIRouter(prefix="/engagement")
 
