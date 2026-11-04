@@ -14,6 +14,7 @@ The original repository was empty. A modular FastAPI/MySQL web foundation has no
 - Channel profile APIs, public video catalog/search/feed and category filtering.
 - Playlist creation/list/detail, channel subscriptions and a latest-from-subscriptions feed, threaded comments/replies, reactions, Watch Later, history, watch progress and in-app notifications.
 - Watch player speed, theater mode, picture-in-picture, keyboard shortcuts, link sharing and like/dislike controls.
+- Standard/Shorts video-format metadata, creator upload selection and a vertical Shorts discovery feed.
 - Creator Studio overview, creator-owned content list, basic video analytics and comment hide/restore workflows.
 - In-app notifications for new public uploads, new subscribers, comments and comment replies, with unread counters and mark-read actions.
 - Presigned direct-to-S3-compatible video upload, object metadata verification and expiring signed playback URLs.
@@ -21,7 +22,7 @@ The original repository was empty. A modular FastAPI/MySQL web foundation has no
 - Architecture, feature roadmap, API, security, development and deployment documentation.
 
 ### Not yet implemented or verified
-Shorts feed, video transcoding/HLS renditions, live streaming/chat, recommendations, advanced player controls, caption pipeline, retention/traffic-source analytics, custom thumbnails, full moderation/admin, notification delivery, monetization, MFA/recovery and enterprise/global infrastructure are roadmap items. A feature is not complete just because its route or UI placeholder exists.
+FFmpeg-validated Shorts duration and renditions, video transcoding/HLS, live streaming/chat, recommendations, advanced player controls, caption pipeline, retention/traffic-source analytics, custom thumbnails, full moderation/admin, notification email/push delivery, monetization, MFA/recovery and enterprise/global infrastructure are roadmap items. A feature is not complete just because its route or UI placeholder exists.
 
 ## Technology
 - Frontend: HTML5, CSS3, vanilla JavaScript ES modules
