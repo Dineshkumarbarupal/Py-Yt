@@ -27,8 +27,8 @@ Py-Yt is an independent video platform inspired by YouTube's product categories.
 ## Shorts and live
 | Feature | Current status |
 |---|---|
-| Vertical short-video feed and upload presets | Planned |
-| Shorts-specific duration/format constraints | Planned |
+| Standard/Shorts format metadata, upload selector and vertical scroll-snap feed | Basic implementation in code |
+| Server-side Shorts duration validation, FFmpeg portrait renditions and cover-frame extraction | Planned |
 | Live stream scheduling and stream keys | Planned |
 | Live ingest, transcoding, low-latency playback and real-time chat | Planned |
 | Live chat moderation, clips and stream analytics | Planned |
