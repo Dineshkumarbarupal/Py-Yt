@@ -17,6 +17,7 @@ The original repository was empty. A modular FastAPI/MySQL web foundation has no
 - Standard/Shorts video-format metadata, creator upload selection and a vertical Shorts discovery feed.
 - Creator Studio overview, creator-owned content list, basic video analytics and comment hide/restore workflows.
 - In-app notifications for new public uploads, new subscribers, comments and comment replies, with unread counters and mark-read actions.
+- UGC safety foundation: user reports for videos/comments and an admin-only review queue with dismiss or remove-content actions.
 - Presigned direct-to-S3-compatible video upload, object metadata verification and expiring signed playback URLs.
 - Dockerfile, Docker Compose, Nginx configuration and GitHub Actions CI workflow.
 - Architecture, feature roadmap, API, security, development and deployment documentation.
