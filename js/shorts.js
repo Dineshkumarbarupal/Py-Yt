@@ -66,12 +66,22 @@ function makeShort(item) {
     }
   });
 
+  const queue = document.createElement("button");
+  queue.type = "button";
+  queue.className = "short-action";
+  queue.textContent = "+";
+  queue.setAttribute("aria-label", "Add Short to queue");
+  queue.dataset.queueAdd = "";
+  queue.dataset.queueId = item.id;
+  queue.dataset.queueTitle = item.title;
+  queue.dataset.queueChannel = item.channel_name || "Creator";
+
   const watch = document.createElement("a");
   watch.className = "short-action";
   watch.href = `/watch/${encodeURIComponent(item.id)}`;
   watch.textContent = "▶";
   watch.setAttribute("aria-label", "Open watch page");
-  actions.append(like, share, watch);
+  actions.append(like, share, queue, watch);
   overlay.append(details, actions);
   frame.append(video, overlay);
 
