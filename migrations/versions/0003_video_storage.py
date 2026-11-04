@@ -8,7 +8,7 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
-    op.add_column("videos", sa.Column("storage_key", sa.String(length=1024), nullable=True))
+    op.add_column("videos", sa.Column("storage_key", sa.String(length=700), nullable=True))
     op.add_column("videos", sa.Column("mime_type", sa.String(length=120), nullable=True))
     op.add_column("videos", sa.Column("file_size_bytes", sa.Integer(), nullable=True))
     op.create_unique_constraint("uq_videos_storage_key", "videos", ["storage_key"])
