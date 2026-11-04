@@ -11,6 +11,10 @@ const playlistDialog = document.querySelector("#playlist-dialog");
 const playlistForm = document.querySelector("#playlist-form");
 const playlistSelect = document.querySelector("#playlist-select");
 const playlistStatus = document.querySelector("#playlist-status");
+const reportDialog = document.querySelector("#report-dialog");
+const reportForm = document.querySelector("#report-form");
+const reportStatus = document.querySelector("#report-status");
+let reportTarget = { type: "video", id: videoId };
 let lastSavedSecond = -1;
 let viewRecorded = false;
 
@@ -129,7 +133,12 @@ async function loadComments() {
       replyButton.type = "button";
       replyButton.className = "comment-reply-button";
       replyButton.textContent = "Reply";
-      header.append(author, replyButton);
+      const reportButton = document.createElement("button");
+      reportButton.type = "button";
+      reportButton.className = "comment-reply-button";
+      reportButton.textContent = "Report";
+      reportButton.addEventListener("click", () => openReportDialog("comment", comment.id));
+      header.append(author, replyButton, reportButton);
 
       const body = document.createElement("p");
       body.textContent = comment.body;
@@ -297,6 +306,56 @@ playlistForm?.addEventListener("submit", async (event) => {
     submit.disabled = false;
   }
 });
+
+
+function openReportDialog(type, id) {
+  reportTarget = { type, id };
+  reportStatus.textContent = "";
+  document.querySelector("#report-target-label").textContent =
+    type === "video" ? "Report this video to the moderation team." : "Report this comment to the moderation team.";
+  reportDialog?.showModal();
+}
+
+document.querySelector("#report-video-button")?.addEventListener("click", () => openReportDialog("video", videoId));
+document.querySelector("#close-report-dialog")?.addEventListener("click", () => reportDialog?.close());
+document.querySelector("#cancel-report")?.addEventListener("click", () => reportDialog?.close());
+
+reportForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const values = Object.fromEntries(new FormData(reportForm).entries());
+  const submit = reportForm.querySelector('button[type="submit"]');
+  submit.disabled = true;
+  reportStatus.textContent = "Submitting report…";
+  try {
+    const result = await apiRequest("/reports", {
+      method: "POST",
+      body: JSON.stringify({
+        target_type: reportTarget.type,
+        target_id: reportTarget.id,
+        reason: values.reason,
+        details: values.details,
+      }),
+    });
+    reportStatus.textContent = result.status === "already_reported"
+      ? "You have already reported this content."
+      : "Report submitted. Thank you for helping keep Py-Yt safe.";
+    if (result.status !== "already_reported") {
+      reportForm.reset();
+      window.setTimeout(() => reportDialog?.close(), 1100);
+    }
+  } catch (error) {
+    reportStatus.textContent = error.message;
+    if (error.message.toLowerCase().includes("sign in")) {
+      const link = document.createElement("a");
+      link.href = "/login";
+      link.textContent = "Sign in";
+      reportStatus.append(" ", link, " to report content.");
+    }
+  } finally {
+    submit.disabled = false;
+  }
+});
+
 
 initializePlayer();
 loadComments();
