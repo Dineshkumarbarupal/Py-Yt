@@ -17,9 +17,15 @@ function readQueue() {
 }
 
 function writeQueue(items) {
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  render();
-  window.dispatchEvent(new CustomEvent("pyyt:queue-updated", { detail: { count: items.length } }));
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    render();
+    window.dispatchEvent(new CustomEvent("pyyt:queue-updated", { detail: { count: items.length } }));
+    return true;
+  } catch {
+    if (status) status.textContent = "Browser session storage is unavailable; the queue cannot be saved.";
+    return false;
+  }
 }
 
 function render() {
@@ -89,10 +95,11 @@ document.addEventListener("click", (event) => {
     title,
     channel: button.dataset.queueChannel || "Creator",
   });
-  writeQueue(items);
-  status.textContent = "Added to queue.";
-  button.textContent = "Added";
-  button.disabled = true;
+  if (writeQueue(items)) {
+    status.textContent = "Added to queue.";
+    button.textContent = "Added";
+    button.disabled = true;
+  }
 });
 
 openButton?.addEventListener("click", () => {
