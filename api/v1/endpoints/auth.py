@@ -70,6 +70,7 @@ def update_profile(
     channel = db.scalar(select(Channel).where(Channel.owner_id == user.id))
     if channel:
         channel.name = user.display_name
+        channel.description = user.bio
     db.commit()
     db.refresh(user)
     return user
