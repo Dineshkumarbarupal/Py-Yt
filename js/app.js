@@ -73,7 +73,15 @@ function renderVideos(items, emptyMessage = "No videos found.") {
     category.textContent = video.category || "";
     copy.append(title, channel, category);
     meta.append(avatar, copy);
-    card.append(thumbLink, meta);
+    const queueButton = document.createElement("button");
+    queueButton.type = "button";
+    queueButton.className = "queue-add-button";
+    queueButton.textContent = "＋ Queue";
+    queueButton.dataset.queueAdd = "";
+    queueButton.dataset.queueId = video.id;
+    queueButton.dataset.queueTitle = video.title;
+    queueButton.dataset.queueChannel = video.channel_name || "Creator";
+    card.append(thumbLink, meta, queueButton);
     grid.append(card);
   }
   feed?.append(grid);
