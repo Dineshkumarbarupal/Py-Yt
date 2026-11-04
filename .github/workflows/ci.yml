@@ -47,6 +47,6 @@ jobs:
       - run: pip install -r requirements.txt
       - run: cp .env.example .env && docker compose config --quiet
       - run: python -m compileall -q main.py api core config db middleware migrations services scripts
-      - run: node --check js/account.js && node --check js/api.js && node --check js/app.js && node --check js/auth.js && node --check js/channel.js && node --check js/library.js && node --check js/playlists.js && node --check js/playlist_detail.js && node --check js/subscriptions.js && node --check js/upload.js && node --check js/watch.js && node --check js/studio.js && node --check js/studio_content.js && node --check js/studio_analytics.js && node --check js/studio_comments.js && node --check js/settings.js && node --check js/notifications.js && node --check js/shorts.js && node --check js/admin_moderation.js
+      - run: node --check js/account.js && node --check js/api.js && node --check js/app.js && node --check js/auth.js && node --check js/channel.js && node --check js/library.js && node --check js/playlists.js && node --check js/playlist_detail.js && node --check js/subscriptions.js && node --check js/upload.js && node --check js/watch.js && node --check js/studio.js && node --check js/studio_content.js && node --check js/studio_analytics.js && node --check js/studio_comments.js && node --check js/settings.js && node --check js/notifications.js && node --check js/shorts.js && node --check js/admin_moderation.js && node --check js/queue.js
       - run: alembic upgrade head
       - run: python -m pytest -q
