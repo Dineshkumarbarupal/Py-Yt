@@ -15,7 +15,7 @@ def register(client, email, name):
     return response.json()
 
 
-def create_public_video(owner):
+def create_public_video(owner, video_format="standard"):
     with SessionLocal() as db:
         channel = db.query(Channel).filter(Channel.owner_id == owner["id"]).one()
         video = Video(
@@ -23,6 +23,7 @@ def create_public_video(owner):
             title="Python tutorial",
             description="Learn Python",
             category="Learning",
+            video_format=video_format,
             source_type="upload",
             storage_key=f"test/{owner['id']}/video.mp4",
             mime_type="video/mp4",
@@ -137,3 +138,14 @@ def test_subscription_lifecycle(client):
     assert creator_notifications.status_code == 200
     assert creator_notifications.json()["unread_count"] == 1
     assert creator_notifications.json()["items"][0]["type"] == "new_subscriber"
+
+
+def test_shorts_discovery_returns_only_short_public_videos(client):
+    owner = register(client, "shorts-owner@example.com", "Shorts Owner")
+    _standard_id, _ = create_public_video(owner, "standard")
+    short_id, _ = create_public_video(owner, "short")
+
+    response = client.get("/api/v1/discovery/shorts")
+    assert response.status_code == 200
+    assert [item["id"] for item in response.json()["items"]] == [short_id]
+    assert response.json()["items"][0]["video_format"] == "short"
