@@ -25,6 +25,7 @@ OpenAPI documentation is available at /docs in non-production environments.
 | POST | /api/v1/uploads/{video_id}/complete | Verify uploaded object |
 | GET | /api/v1/discovery/feed | Latest public feed with category filter |
 | GET | /api/v1/discovery/search | Search local catalog |
+| GET | /api/v1/discovery/shorts | Latest public Shorts feed |
 | GET | /api/v1/playlists/mine | Current user's playlists |
 | POST | /api/v1/playlists | Create playlist |
 | GET | /api/v1/playlists/{playlist_id} | Read accessible playlist |
