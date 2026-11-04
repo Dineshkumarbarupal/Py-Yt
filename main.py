@@ -72,6 +72,10 @@ async def home(request: Request):
         ]
     return templates.TemplateResponse(request=request, name="index.html", context={"videos": videos})
 
+@app.get("/admin/moderation", include_in_schema=False)
+async def admin_moderation_page(request: Request):
+    return templates.TemplateResponse(request=request, name="admin_moderation.html", context={})
+
 @app.get("/shorts", include_in_schema=False)
 async def shorts_page(request: Request):
     return templates.TemplateResponse(request=request, name="shorts.html", context={})
