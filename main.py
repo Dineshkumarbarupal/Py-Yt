@@ -85,6 +85,18 @@ async def studio_page(request: Request):
 async def studio_upload_page(request: Request):
     return templates.TemplateResponse(request=request, name="studio_upload.html", context={})
 
+@app.get("/studio/{studio_section}", include_in_schema=False)
+async def studio_section_page(request: Request, studio_section: str):
+    studio_sections = {
+        "content": ("Your content", "Review draft and published videos in the Creator Studio."),
+        "analytics": ("Channel analytics", "Views, watch time, audience and revenue analytics are planned for a later phase."),
+        "comments": ("Comments", "Comment review and moderation tools are planned for a later phase."),
+    }
+    if studio_section not in studio_sections:
+        return JSONResponse({"detail": "Not found."}, status_code=404)
+    title, description = studio_sections[studio_section]
+    return templates.TemplateResponse(request=request, name="section.html", context={"title": title, "description": description})
+
 @app.get("/watch/{video_id}", include_in_schema=False)
 async def watch_page(request: Request, video_id: str):
     with SessionLocal() as db:
@@ -104,6 +116,7 @@ async def watch_page(request: Request, video_id: str):
 @app.get("/{section}", include_in_schema=False)
 async def section_page(request: Request, section: str):
     sections = {
+        "channel": ("Your channel", "Your public channel profile and videos will appear here."),
         "shorts": ("Shorts", "Vertical short-form video discovery will be enabled with the media pipeline."),
         "subscriptions": ("Subscriptions", "Sign in and subscribe to channels to build your feed."),
         "history": ("History", "Your watch history will appear here when watch tracking is enabled."),
