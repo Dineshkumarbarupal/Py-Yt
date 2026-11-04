@@ -2,7 +2,7 @@ from db.models import Channel, Comment, Video
 from db.session import SessionLocal
 
 
-def test_creator_studio_dashboard_and_comment_moderation(client):
+def test_creator_studio_dashboard_and_comment_moderation(client, monkeypatch):
     registration = client.post(
         "/api/v1/auth/register",
         json={
@@ -68,3 +68,24 @@ def test_creator_studio_dashboard_and_comment_moderation(client):
     )
     assert hidden.status_code == 200
     assert hidden.json()["status"] == "hidden"
+
+    import api.v1.endpoints.videos as videos_module
+    monkeypatch.setattr(videos_module, "delete_object", lambda object_key: None)
+
+    updated = client.patch(
+        f"/api/v1/videos/{video_id}",
+        json={"title": "Updated Studio test", "category": "Technology", "visibility": "unlisted"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["title"] == "Updated Studio test"
+    assert updated.json()["visibility"] == "unlisted"
+
+    deleted = client.delete(
+        f"/api/v1/videos/{video_id}",
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert deleted.status_code == 204
+
+    unavailable = client.get(f"/api/v1/videos/{video_id}")
+    assert unavailable.status_code == 404
