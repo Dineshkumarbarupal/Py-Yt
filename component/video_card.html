@@ -1,0 +1,11 @@
+<article class="video-card" data-video-id="{{ video.id }}">
+  <a class="video-thumb" href="/watch/{{ video.id }}">
+    {% if video.thumbnail_url %}<img src="{{ video.thumbnail_url }}" alt="" loading="lazy">{% else %}<span class="thumb-placeholder">▶</span>{% endif %}
+    {% if video.duration %}<span class="duration">{{ video.duration }}</span>{% endif %}
+  </a>
+  <div class="video-meta">
+    <div class="channel-avatar">{{ video.channel_initial or "P" }}</div>
+    <div class="video-copy"><a class="video-title" href="/watch/{{ video.id }}">{{ video.title }}</a><div class="muted">{{ video.channel_name }} · {{ video.view_label }}</div><div class="muted">{{ video.published_label }}</div></div>
+    <button class="more-button" aria-label="More actions">⋮</button>
+  </div>
+</article>
