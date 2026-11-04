@@ -221,6 +221,8 @@ async def section_page(request: Request, section: str):
         return templates.TemplateResponse(request=request, name="subscriptions.html", context={})
     if section == "playlists":
         return templates.TemplateResponse(request=request, name="playlists.html", context={})
+    if section == "settings":
+        return templates.TemplateResponse(request=request, name="settings.html", context={})
     if section not in sections:
         return JSONResponse({"detail": "Not found."}, status_code=404)
     title, description = sections[section]
