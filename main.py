@@ -3,17 +3,20 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from jinja2 import ChoiceLoader, FileSystemLoader
 from starlette.middleware.cors import CORSMiddleware
 from sqlalchemy import desc, select
 from config.settings import settings
 from api.v1.router import api_router
 from core.logging import configure_logging
-from db.models import Channel, Video
+from db.models import Channel, User, Video
+from core.dependencies import get_optional_user
 from db.session import SessionLocal
 from middleware.security import CSRFMiddleware
 
 configure_logging()
 templates = Jinja2Templates(directory="template")
+templates.env.loader = ChoiceLoader([FileSystemLoader("template"), FileSystemLoader(".")])
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -98,7 +101,7 @@ async def studio_section_page(request: Request, studio_section: str):
     return templates.TemplateResponse(request=request, name="section.html", context={"title": title, "description": description})
 
 @app.get("/watch/{video_id}", include_in_schema=False)
-async def watch_page(request: Request, video_id: str):
+async def watch_page(request: Request, video_id: str, user: User | None = Depends(get_optional_user)):
     with SessionLocal() as db:
         row = db.execute(
             select(Video, Channel)
@@ -108,9 +111,19 @@ async def watch_page(request: Request, video_id: str):
     if not row:
         return templates.TemplateResponse(request=request, name="section.html", status_code=404, context={
             "title": "Video unavailable",
-            "description": "This video does not exist, is private or has not been published.",
+            "description": "This video does not exist or is not available.",
         })
     video, channel = row
+    if video.status != "published" and not (user and user.id == channel.owner_id):
+        return templates.TemplateResponse(request=request, name="section.html", status_code=404, context={
+            "title": "Video unavailable",
+            "description": "This video does not exist or is not available.",
+        })
+    if video.visibility == "private" and not (user and user.id == channel.owner_id):
+        return templates.TemplateResponse(request=request, name="section.html", status_code=404, context={
+            "title": "Video unavailable",
+            "description": "This video does not exist or is not available.",
+        })
     return templates.TemplateResponse(request=request, name="watch.html", context={"video": video, "channel": channel})
 
 @app.get("/{section}", include_in_schema=False)
