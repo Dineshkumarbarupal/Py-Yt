@@ -78,6 +78,7 @@ def test_password_change_requires_current_password_and_new_password_works(client
     client.cookies.set("pyyt_session", new_session)
     assert client.get("/api/v1/auth/me").status_code == 200
 
+    client.cookies.clear()
     csrf = client.cookies.get("pyyt_csrf")
     client.post("/api/v1/auth/logout", headers={"X-CSRF-Token": csrf})
     login = client.post(
