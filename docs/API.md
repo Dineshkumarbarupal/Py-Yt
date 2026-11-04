@@ -5,7 +5,7 @@ OpenAPI documentation is available at /docs in non-production environments.
 | Method | Endpoint | Purpose |
 |---|---|---|
 | GET | /health | Process health |
-| GET | /api/v1/health/ready | Database readiness |
+| GET | /api/v1/ready | Database readiness |
 | POST | /api/v1/auth/register | Register user and create initial channel |
 | POST | /api/v1/auth/login | Sign in and set session cookies |
 | POST | /api/v1/auth/logout | Clear session cookies |
