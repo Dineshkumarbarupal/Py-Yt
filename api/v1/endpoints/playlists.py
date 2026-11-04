@@ -60,6 +60,8 @@ def get_playlist(playlist_id: str, db: Session = Depends(get_db), user: User | N
         "id": playlist.id,
         "title": playlist.title,
         "description": playlist.description,
+        "visibility": playlist.visibility,
+        "is_owner": is_owner,
         "items": [
             {"position": item.position, "video_id": video.id, "title": video.title}
             for item, video in rows
