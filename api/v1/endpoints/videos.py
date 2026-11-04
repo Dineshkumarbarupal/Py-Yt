@@ -3,7 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import desc, or_, select
 from sqlalchemy.orm import Session
-from db.models import Channel, Video, User
+from db.models import Channel, Subscription, Video, User
+from services.notifications import notify
 from db.session import get_db
 from core.dependencies import get_current_user, get_optional_user
 from core.media_storage import MediaStorageNotConfigured, create_playback_url, delete_object
@@ -137,6 +138,20 @@ def publish_video(video_id: str, payload: VideoPublish, db: Session = Depends(ge
     video.status = "published"
     video.published_at = datetime.now(timezone.utc).replace(tzinfo=None)
     video.visibility = payload.visibility
+    if video.visibility == "public":
+        subscriber_ids = db.scalars(
+            select(Subscription.subscriber_id).where(Subscription.channel_id == channel.id)
+        ).all()
+        for recipient_id in subscriber_ids:
+            notify(
+                db,
+                recipient_id=recipient_id,
+                actor_id=user.id,
+                notification_type="new_video",
+                entity_type="video",
+                entity_id=video.id,
+                message=f"{channel.name} published a new video: {video.title}",
+            )
     db.commit()
     return {"id": video.id, "status": video.status, "visibility": video.visibility}
 
