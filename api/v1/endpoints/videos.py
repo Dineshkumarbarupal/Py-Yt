@@ -1,12 +1,12 @@
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import desc, or_, select
 from sqlalchemy.orm import Session
 from db.models import Channel, Video, User
 from db.session import get_db
 from core.dependencies import get_current_user, get_optional_user
-from core.media_storage import MediaStorageNotConfigured, create_playback_url
+from core.media_storage import MediaStorageNotConfigured, create_playback_url, delete_object
 from botocore.exceptions import BotoCoreError, ClientError
 
 router = APIRouter(prefix="/videos")
@@ -101,6 +101,30 @@ def update_video(video_id: str, payload: VideoUpdate, db: Session = Depends(get_
     db.commit()
     db.refresh(video)
     return video
+
+@router.delete("/{video_id}", status_code=204)
+def delete_video(
+    video_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    video = db.get(Video, video_id)
+    channel = db.scalar(select(Channel).where(Channel.owner_id == user.id))
+    if not video or not channel or video.channel_id != channel.id:
+        raise HTTPException(status_code=404, detail="Video not found.")
+    if video.status == "deleted":
+        return Response(status_code=204)
+    if video.storage_key:
+        try:
+            delete_object(video.storage_key)
+        except MediaStorageNotConfigured as exc:
+            raise HTTPException(status_code=503, detail=str(exc))
+        except (BotoCoreError, ClientError):
+            raise HTTPException(status_code=502, detail="The media object could not be deleted. The video remains unchanged.")
+    video.status = "deleted"
+    video.visibility = "private"
+    db.commit()
+    return Response(status_code=204)
 
 @router.post("/{video_id}/publish")
 def publish_video(video_id: str, payload: VideoPublish, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
