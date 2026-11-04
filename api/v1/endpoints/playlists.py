@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from db.models import Channel, Playlist, PlaylistItem, User, Video
 from db.session import get_db
-from core.dependencies import get_current_user
+from core.dependencies import get_current_user, get_optional_user
 
 router = APIRouter(prefix="/playlists")
 
@@ -37,7 +37,7 @@ def create_playlist(payload: PlaylistCreate, db: Session = Depends(get_db), user
     return playlist
 
 @router.get("/{playlist_id}")
-def get_playlist(playlist_id: str, db: Session = Depends(get_db), user: User | None = Depends(get_current_user)):
+def get_playlist(playlist_id: str, db: Session = Depends(get_db), user: User | None = Depends(get_optional_user)):
     playlist = db.get(Playlist, playlist_id)
     if not playlist or (playlist.visibility == "private" and (not user or playlist.owner_id != user.id)):
         raise HTTPException(status_code=404, detail="Playlist not found.")
