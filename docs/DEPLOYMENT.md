@@ -12,7 +12,7 @@ For the current Phase 1 scope, Railway is the easiest initial target: it support
 5. Set the pre-deploy command to: alembic upgrade head.
 6. Set the healthcheck path to /health, generate a domain, then attach your custom domain and HTTPS.
 7. Configure MySQL backups/point-in-time recovery where available and test restoring a backup.
-8. Configure object-storage CORS for POST uploads from your production domain. Do not store video bytes in the app container.
+8. Configure object-storage CORS to allow PUT from your production origin and the Content-Type request header. Do not store video bytes in the app container.
 9. Verify health, login, upload, completion, publish, signed playback and database restore before public launch.
 
 Railway documentation references:
