@@ -1,0 +1,10 @@
+{
+  "name": "py-yt",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Browser-side ES modules for the Py-Yt video platform",
+  "scripts": {
+    "check": "node --check js/api.js && node --check js/app.js && node --check js/auth.js && node --check js/channel.js && node --check js/library.js && node --check js/playlists.js && node --check js/playlist_detail.js && node --check js/subscriptions.js && node --check js/upload.js && node --check js/watch.js"
+  }
+}
