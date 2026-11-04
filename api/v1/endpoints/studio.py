@@ -11,7 +11,7 @@ router = APIRouter(prefix="/studio")
 
 @router.get("/overview")
 def overview(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    channel = getget_owned_channel(db, user)
+    channel = get_owned_channel(db, user)
     published_count = db.scalar(
         select(func.count(Video.id)).where(Video.channel_id == channel.id, Video.status == "published")
     ) or 0
