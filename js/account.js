@@ -1,9 +1,11 @@
 import { apiRequest } from "./api.js";
 
 const avatar = document.querySelector(".top-actions .avatar");
-if (avatar) {
-  try {
-    const user = await apiRequest("/auth/me");
+const notificationLink = document.querySelector("#notification-link");
+
+try {
+  const user = await apiRequest("/auth/me");
+  if (avatar) {
     avatar.href = "/settings";
     avatar.classList.add("avatar-link");
     avatar.textContent = "";
@@ -17,11 +19,24 @@ if (avatar) {
     }
     avatar.title = user.display_name || user.email;
     avatar.setAttribute("aria-label", "Account settings");
-  } catch {
+  }
+  if (notificationLink) {
+    const result = await apiRequest("/notifications?limit=1");
+    if (result.unread_count > 0) {
+      const badge = document.createElement("span");
+      badge.className = "notification-badge";
+      badge.textContent = result.unread_count > 9 ? "9+" : String(result.unread_count);
+      notificationLink.append(badge);
+      notificationLink.setAttribute("aria-label", `${result.unread_count} unread notifications`);
+    }
+  }
+} catch {
+  if (avatar) {
     avatar.href = "/login";
     avatar.textContent = "Sign in";
     avatar.classList.remove("avatar");
     avatar.classList.add("sign-in-link");
     avatar.setAttribute("aria-label", "Sign in");
   }
+  if (notificationLink) notificationLink.href = "/login";
 }
