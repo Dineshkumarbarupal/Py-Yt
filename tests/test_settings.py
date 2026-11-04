@@ -70,6 +70,7 @@ def test_password_change_requires_current_password_and_rotates_credentials(clien
     assert changed.status_code == 204
     assert client.get("/api/v1/auth/me").status_code == 200
 
+    client.cookies.clear()
     old_login = client.post(
         "/api/v1/auth/login",
         json={"email": "settings-user@example.com", "password": "A-very-strong-test-password-10"},
