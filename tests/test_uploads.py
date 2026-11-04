@@ -35,6 +35,7 @@ def test_upload_verify_publish_and_playback(client, monkeypatch):
             "title": "Uploaded test video",
             "description": "Integration test",
             "category": "Learning",
+            "video_format": "short",
             "content_type": "video/mp4",
             "file_size_bytes": 2048,
         },
@@ -42,6 +43,7 @@ def test_upload_verify_publish_and_playback(client, monkeypatch):
     )
     assert presigned.status_code == 201
     assert presigned.json()["method"] == "PUT"
+    assert presigned.json()["video_format"] == "short"
     video_id = presigned.json()["video_id"]
 
     complete = client.post(
