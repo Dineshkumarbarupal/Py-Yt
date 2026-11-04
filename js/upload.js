@@ -21,6 +21,7 @@ form?.addEventListener("submit", async (event) => {
         title: values.title,
         description: values.description,
         category: values.category,
+        video_format: values.video_format,
         content_type: file.type,
         file_size_bytes: file.size,
       }),
