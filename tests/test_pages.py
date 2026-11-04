@@ -1,5 +1,5 @@
 def test_creator_studio_pages_render(client):
-    for path in ["/studio", "/studio/upload", "/studio/content", "/studio/analytics", "/studio/comments", "/settings", "/notifications", "/shorts"]:
+    for path in ["/studio", "/studio/upload", "/studio/content", "/studio/analytics", "/studio/comments", "/settings", "/notifications", "/shorts", "/admin/moderation"]:
         response = client.get(path)
         assert response.status_code == 200, path
         assert "Py-Yt" in response.text, path
