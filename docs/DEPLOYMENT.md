@@ -10,10 +10,10 @@ For the current Phase 1 scope, Railway is the easiest initial target: it support
 3. Add a service from GitHub and select Dineshkumarbarupal/Py-Yt on branch main. Build using the root Dockerfile.
 4. Set environment variables: APP_ENV=production, a newly generated SECRET_KEY, CORS_ORIGINS for your production origin, SESSION_COOKIE_SECURE=true, and the MEDIA_* values for your S3/R2 bucket. Set DATABASE_URL using the private MySQL service variables, for example: mysql+pymysql://${{MySQL.MYSQLUSER}}:${{MySQL.MYSQLPASSWORD}}@${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}. URL-encode special characters in the database password before assembling the URL.
 5. Set the pre-deploy command to: alembic upgrade head.
-6. Set the healthcheck path to /health, generate a domain, then attach your custom domain and HTTPS.
+6. Set the healthcheck path to /api/v1/ready (checks database connectivity), generate a domain, then attach your custom domain and HTTPS.
 7. Configure MySQL backups/point-in-time recovery where available and test restoring a backup.
 8. Configure object-storage CORS to allow PUT from your production origin and the Content-Type request header. Do not store video bytes in the app container.
-9. Verify health, login, upload, completion, publish, signed playback and database restore before public launch.
+9. Verify health and database readiness, login, upload, completion, publish, signed playback and database restore before public launch.
 
 Railway documentation references:
 - FastAPI: https://railway.com/guides/fastapi
