@@ -92,6 +92,32 @@ def test_playlist_create_and_visibility(client):
     detail = client.get(f"/api/v1/playlists/{playlist_id}")
     assert detail.status_code == 200
     assert detail.json()["items"][0]["video_id"] == video_id
+    assert detail.json()["is_owner"] is True
+
+    updated = client.patch(
+        f"/api/v1/playlists/{playlist_id}",
+        json={"title": "Updated Learning List", "description": "A curated study list."},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["title"] == "Updated Learning List"
+
+    removed = client.delete(
+        f"/api/v1/playlists/{playlist_id}/items/{video_id}",
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert removed.status_code == 204
+
+    empty_detail = client.get(f"/api/v1/playlists/{playlist_id}")
+    assert empty_detail.status_code == 200
+    assert empty_detail.json()["items"] == []
+
+    deleted = client.delete(
+        f"/api/v1/playlists/{playlist_id}",
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert deleted.status_code == 204
+    assert client.get(f"/api/v1/playlists/{playlist_id}").status_code == 404
 
 
 def test_subscription_lifecycle(client):
