@@ -1,11 +1,11 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 from db.models import Video, VideoReaction, WatchHistory, User
 from db.session import get_db
-from core.dependencies import get_current_user
+from core.dependencies import get_current_user, get_optional_user
 
 router = APIRouter(prefix="/engagement")
 
@@ -14,6 +14,38 @@ class ReactionInput(BaseModel):
 
 class WatchProgressInput(BaseModel):
     progress_seconds: int = Field(ge=0, le=86400)
+
+
+@router.get("/videos/{video_id}/reaction")
+def reaction_summary(
+    video_id: str,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+):
+    video = db.get(Video, video_id)
+    if not video or video.status != "published" or video.visibility != "public":
+        raise HTTPException(status_code=404, detail="Video not found.")
+    counts = db.execute(
+        select(VideoReaction.reaction, func.count(VideoReaction.id))
+        .where(VideoReaction.video_id == video_id)
+        .group_by(VideoReaction.reaction)
+    ).all()
+    totals = {reaction: count for reaction, count in counts}
+    current = None
+    if user:
+        row = db.scalar(
+            select(VideoReaction).where(
+                VideoReaction.video_id == video_id,
+                VideoReaction.user_id == user.id,
+            )
+        )
+        current = row.reaction if row else None
+    return {
+        "video_id": video_id,
+        "likes": int(totals.get("like", 0)),
+        "dislikes": int(totals.get("dislike", 0)),
+        "current_reaction": current,
+    }
 
 @router.put("/videos/{video_id}/reaction")
 def set_reaction(video_id: str, payload: ReactionInput, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
