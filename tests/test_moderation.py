@@ -63,7 +63,6 @@ def test_video_report_duplicate_and_admin_action(client):
     assert forbidden.status_code == 403
 
     with SessionLocal() as db:
-        admin = db.query(type(db.get(type(db.query(ContentReport).first()), None))) if False else None
         from db.models import User
         admin_user = db.query(User).filter(User.email == reporter["email"]).one()
         admin_user.role = "admin"
