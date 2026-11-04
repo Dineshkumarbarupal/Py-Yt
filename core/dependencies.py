@@ -2,7 +2,7 @@ from fastapi import Cookie, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from db.models import User
 from db.session import get_db
-from core.security import decode_access_token
+from core.security import decode_access_token_with_version
 
 def get_current_user(
     token: str | None = Cookie(default=None, alias="pyyt_session"),
@@ -10,12 +10,15 @@ def get_current_user(
 ) -> User:
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Please sign in.")
-    user_id = decode_access_token(token)
-    if not user_id:
+    decoded = decode_access_token_with_version(token)
+    if not decoded:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired. Please sign in again.")
+    user_id, token_version = decoded
     user = db.get(User, user_id)
     if not user or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Account is unavailable.")
+    if token_version != user.auth_version:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Your session was revoked. Please sign in again.")
     return user
 
 def get_optional_user(
@@ -24,8 +27,11 @@ def get_optional_user(
 ) -> User | None:
     if not token:
         return None
-    user_id = decode_access_token(token)
-    if not user_id:
+    decoded = decode_access_token_with_version(token)
+    if not decoded:
         return None
+    user_id, token_version = decoded
     user = db.get(User, user_id)
-    return user if user and user.is_active else None
+    if not user or not user.is_active or token_version != user.auth_version:
+        return None
+    return user
