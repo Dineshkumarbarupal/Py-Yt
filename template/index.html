@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Discover and watch videos on Py-Yt.">
+  <title>Py-Yt — Discover</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  {% include "component/topbar.html" %}
+  <div class="app-layout">
+    {% include "component/sidebar.html" %}
+    <main class="main-content">
+      <div class="category-row" aria-label="Video categories">
+        <button class="category-chip selected" data-category="All">All</button>
+        <button class="category-chip" data-category="Music">Music</button>
+        <button class="category-chip" data-category="Gaming">Gaming</button>
+        <button class="category-chip" data-category="Technology">Technology</button>
+        <button class="category-chip" data-category="Learning">Learning</button>
+        <button class="category-chip" data-category="Live">Live</button>
+        <button class="category-chip" data-category="Recently uploaded">Recently uploaded</button>
+      </div>
+      <section class="welcome-row">
+        <div><p class="eyebrow">YOUR VIDEO SPACE</p><h1>Find your next watch.</h1><p class="muted">Explore videos, follow creators and build your own library.</p></div>
+        <a class="primary-button" href="/studio">＋ Create</a>
+      </section>
+      <section class="feed-section">
+        <div class="section-heading"><h2>Recommended for you</h2><span class="muted">Your feed will become personal as you use Py-Yt.</span></div>
+        {% if videos %}
+          <div class="video-grid">
+            {% for video in videos %}{% include "component/video_card.html" %}{% endfor %}
+          </div>
+        {% else %}
+          {% set icon = "▶" %}{% set title = "Your feed is ready for its first video" %}{% set message = "Upload original content in Creator Studio or connect a permitted content provider. We do not display fabricated video results." %}{% set action_label = "Open Creator Studio" %}{% set action_url = "/studio" %}
+          {% include "component/empty_state.html" %}
+        {% endif %}
+      </section>
+      {% include "component/toast.html" %}
+    </main>
+  </div>
+  <script type="module" src="/js/app.js"></script>
+</body></html>
