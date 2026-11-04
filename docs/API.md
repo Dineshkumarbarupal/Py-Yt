@@ -8,7 +8,8 @@ OpenAPI documentation is available at /docs in non-production environments.
 | POST | /api/v1/auth/register | Register user and create initial channel |
 | POST | /api/v1/auth/login | Sign in and set session cookies |
 | POST | /api/v1/auth/logout | Clear session cookies |
-| GET | /api/v1/auth/me | Current user |
+| GET/PATCH | /api/v1/auth/me | Read/update current profile |
+| POST | /api/v1/auth/change-password | Change password after current-password verification |
 | GET/PATCH | /api/v1/channels/me | Read/update current channel |
 | GET | /api/v1/channels/{handle} | Public channel profile |
 | GET | /api/v1/videos | List public videos |
