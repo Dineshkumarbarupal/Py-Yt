@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from botocore.exceptions import BotoCoreError, ClientError
 from config.settings import settings
 from core.dependencies import get_current_user
-from core.media_storage import MediaStorageNotConfigured, create_upload_form, inspect_uploaded_object
+from core.media_storage import MediaStorageNotConfigured, create_upload_url, delete_object, inspect_uploaded_object
 from db.models import Channel, Video, User, new_id
 from db.session import get_db
 
@@ -51,7 +51,7 @@ def presign_upload(payload: UploadRequest, db: Session = Depends(get_db), user: 
     )
     db.add(video)
     try:
-        form = create_upload_form(object_key, payload.content_type, payload.file_size_bytes)
+        upload_url = create_upload_url(object_key, payload.content_type)
         db.commit()
     except MediaStorageNotConfigured as exc:
         db.rollback()
@@ -61,8 +61,9 @@ def presign_upload(payload: UploadRequest, db: Session = Depends(get_db), user: 
         raise HTTPException(status_code=502, detail="Could not prepare the upload with the media storage provider.")
     return {
         "video_id": video_id,
-        "upload_url": form["url"],
-        "fields": form["fields"],
+        "upload_url": upload_url,
+        "method": "PUT",
+        "headers": {"Content-Type": payload.content_type},
         "expires_in": 900,
         "max_file_size_bytes": settings.upload_max_bytes,
     }
@@ -82,6 +83,12 @@ def complete_upload(video_id: str, db: Session = Depends(get_db), user: User = D
     except (BotoCoreError, ClientError):
         raise HTTPException(status_code=409, detail="The uploaded object was not found. Retry the upload.")
     if metadata.get("ContentLength") != video.file_size_bytes or metadata.get("ContentType") != video.mime_type:
+        try:
+            delete_object(video.storage_key)
+        except (BotoCoreError, ClientError):
+            raise HTTPException(status_code=502, detail="Upload validation failed and the uploaded object could not be cleaned up.")
+        video.status = "failed"
+        db.commit()
         raise HTTPException(status_code=422, detail="Uploaded file metadata does not match the authorized upload.")
     video.status = "ready"
     db.commit()
