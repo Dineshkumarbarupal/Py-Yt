@@ -119,3 +119,13 @@ class WatchHistory(Base):
     video_id: Mapped[str] = mapped_column(ForeignKey("videos.id", ondelete="CASCADE"), index=True, nullable=False)
     progress_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     last_watched_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+
+
+class WatchLater(Base):
+    __tablename__ = "watch_later"
+    __table_args__ = (UniqueConstraint("user_id", "video_id", name="uq_user_watch_later"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    video_id: Mapped[str] = mapped_column(ForeignKey("videos.id", ondelete="CASCADE"), index=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
