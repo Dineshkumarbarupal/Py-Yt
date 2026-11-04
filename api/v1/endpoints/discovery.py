@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from db.session import get_db
-from services.catalog import public_feed, search_public_videos
+from services.catalog import public_feed, public_shorts, search_public_videos
 
 router = APIRouter()
 
@@ -37,4 +37,17 @@ def search_videos(
         "limit": limit,
         "offset": offset,
         "category": category or "All",
+    }
+
+
+@router.get("/shorts")
+def shorts(
+    limit: int = Query(default=20, ge=1, le=30),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+):
+    return {
+        "items": public_shorts(db, limit=limit, offset=offset),
+        "limit": limit,
+        "offset": offset,
     }
