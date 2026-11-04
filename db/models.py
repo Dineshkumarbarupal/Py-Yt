@@ -42,7 +42,7 @@ class Video(Base):
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False, default="")
     category: Mapped[str] = mapped_column(String(40), nullable=False, default="General")
-    storage_key: Mapped[str | None] = mapped_column(String(1024), nullable=True, unique=True)
+    storage_key: Mapped[str | None] = mapped_column(String(700), nullable=True, unique=True)
     mime_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
     file_size_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     source_type: Mapped[str] = mapped_column(String(20), nullable=False, default="upload")
