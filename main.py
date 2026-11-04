@@ -169,6 +169,21 @@ async def public_channel_page(request: Request, handle: str):
         context={"channel": channel, "videos": videos},
     )
 
+@app.get("/channel", include_in_schema=False)
+async def own_channel(request: Request, user: User | None = Depends(get_optional_user)):
+    if not user:
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/login", status_code=303)
+    with SessionLocal() as db:
+        channel = db.scalar(select(Channel).where(Channel.owner_id == user.id))
+    if not channel:
+        return templates.TemplateResponse(request=request, name="section.html", status_code=404, context={
+            "title": "Channel not found",
+            "description": "Your channel has not been created yet.",
+        })
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url=f"/@{channel.handle}", status_code=303)
+
 @app.get("/{section}", include_in_schema=False)
 async def section_page(request: Request, section: str):
     sections = {
