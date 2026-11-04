@@ -21,7 +21,7 @@
 ## Environment
 For local Python execution, the database host is usually 127.0.0.1. In Docker Compose, the host is the service name mysql; compose sets that URL for the app container.
 
-Uploads require MEDIA_BUCKET, MEDIA_ACCESS_KEY_ID and MEDIA_SECRET_ACCESS_KEY, and optionally MEDIA_ENDPOINT_URL and MEDIA_REGION. For Cloudflare R2, use the account-specific R2 S3 endpoint, region auto, and an R2 access key. For AWS, use an S3 bucket in the selected region. Configure bucket CORS to allow browser POST uploads from the Py-Yt origin and the required content-type headers. Restrict storage credentials to the media bucket and required operations.
+Uploads require MEDIA_BUCKET, MEDIA_ACCESS_KEY_ID and MEDIA_SECRET_ACCESS_KEY, and optionally MEDIA_ENDPOINT_URL and MEDIA_REGION. For Cloudflare R2, use the account-specific R2 S3 endpoint and region auto. For AWS, use an S3 bucket in the selected region. Configure bucket CORS to allow browser PUT uploads from the Py-Yt origin and the required content-type header. The upload URL is a short-lived signed PUT URL; the browser sends the raw file bytes, not multipart form fields. The backend verifies object ContentLength and ContentType after upload. A mismatch is rejected and the object is deleted where possible. Restrict storage credentials to the media bucket and required operations.
 
 ## Tests
 Run pytest -q. The test suite uses a test database URL if DATABASE_URL is not supplied. CI runs against MySQL 8.4 and applies Alembic migrations before tests.
