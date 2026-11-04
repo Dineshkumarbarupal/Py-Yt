@@ -58,6 +58,36 @@ def test_watch_later_and_liked_library(client):
         headers={"X-CSRF-Token": viewer_client.cookies.get("pyyt_csrf")},
     )
     assert liked.status_code == 200
+    summary = viewer_client.get(f"/api/v1/engagement/videos/{video_id}/reaction")
+    assert summary.status_code == 200
+    assert summary.json()["likes"] == 1
+    assert summary.json()["dislikes"] == 0
+    assert summary.json()["current_reaction"] == "like"
+
+    disliked = viewer_client.put(
+        f"/api/v1/engagement/videos/{video_id}/reaction",
+        json={"reaction": "dislike"},
+        headers={"X-CSRF-Token": viewer_client.cookies.get("pyyt_csrf")},
+    )
+    assert disliked.status_code == 200
+    summary = viewer_client.get(f"/api/v1/engagement/videos/{video_id}/reaction")
+    assert summary.json()["likes"] == 0
+    assert summary.json()["dislikes"] == 1
+    assert summary.json()["current_reaction"] == "dislike"
+
+    viewer_client.delete(
+        f"/api/v1/engagement/videos/{video_id}/reaction",
+        headers={"X-CSRF-Token": viewer_client.cookies.get("pyyt_csrf")},
+    )
+    summary = viewer_client.get(f"/api/v1/engagement/videos/{video_id}/reaction")
+    assert summary.json()["current_reaction"] is None
+    liked_again = viewer_client.put(
+        f"/api/v1/engagement/videos/{video_id}/reaction",
+        json={"reaction": "like"},
+        headers={"X-CSRF-Token": viewer_client.cookies.get("pyyt_csrf")},
+    )
+    assert liked_again.status_code == 200
+
     liked_list = viewer_client.get("/api/v1/library/liked")
     assert liked_list.status_code == 200
     assert [item["id"] for item in liked_list.json()["items"]] == [video_id]
