@@ -21,6 +21,7 @@ class UploadRequest(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str = Field(default="", max_length=10000)
     category: str = Field(default="General", pattern="^(General|Music|Gaming|Technology|Learning|Live|Comedy|Sports|News|Entertainment)$")
+    video_format: str = Field(default="standard", pattern="^(standard|short)$")
     content_type: str
     file_size_bytes: int = Field(gt=0)
 
@@ -42,6 +43,7 @@ def presign_upload(payload: UploadRequest, db: Session = Depends(get_db), user: 
         title=payload.title.strip(),
         description=payload.description.strip(),
         category=payload.category,
+        video_format=payload.video_format,
         storage_key=object_key,
         mime_type=payload.content_type,
         file_size_bytes=payload.file_size_bytes,
@@ -61,6 +63,7 @@ def presign_upload(payload: UploadRequest, db: Session = Depends(get_db), user: 
         raise HTTPException(status_code=502, detail="Could not prepare the upload with the media storage provider.")
     return {
         "video_id": video_id,
+        "video_format": video.video_format,
         "upload_url": upload_url,
         "method": "PUT",
         "headers": {"Content-Type": payload.content_type},
