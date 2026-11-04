@@ -12,7 +12,8 @@ The original repository was empty. A modular FastAPI/MySQL web foundation has no
 - MySQL SQLAlchemy models and Alembic migrations for users, channels, videos, playlists, subscriptions, reactions, comments and watch history.
 - Registration/login/logout/current-user APIs with Argon2 password hashing and cookie-based JWT sessions; profile, avatar and password settings with current-password verification.
 - Channel profile APIs, public video catalog/search/feed and category filtering.
-- Playlist creation/list/detail, channel subscriptions and a latest-from-subscriptions feed, comments, reactions, Watch Later, history, watch progress and in-app notifications.
+- Playlist creation/list/detail, channel subscriptions and a latest-from-subscriptions feed, threaded comments/replies, reactions, Watch Later, history, watch progress and in-app notifications.
+- Watch player speed, theater mode, picture-in-picture, keyboard shortcuts, link sharing and like/dislike controls.
 - Creator Studio overview, creator-owned content list, basic video analytics and comment hide/restore workflows.
 - In-app notifications for new public uploads, new subscribers, comments and comment replies, with unread counters and mark-read actions.
 - Presigned direct-to-S3-compatible video upload, object metadata verification and expiring signed playback URLs.
