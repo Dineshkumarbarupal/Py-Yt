@@ -51,7 +51,8 @@ Py-Yt is an independent video platform inspired by YouTube's product categories.
 
 ## Platform administration and safety
 - Admin RBAC and staff roles: planned.
-- User/content reports and moderation queue: planned.
+- Viewer reporting for public videos and visible comments, admin-only moderation queue, dismiss/review/action controls: basic implementation in code.
+- Appeals, reviewer audit trail, automated abuse detection, copyright/takedown workflow and policy automation: planned.
 - Audit logs, appeals, abuse detection, anti-spam and rate limiting: planned.
 - Account recovery, email verification, MFA/passkeys and OAuth sign-in: planned.
 - Age-appropriate/supervised experiences, localization and accessibility audits: planned.
