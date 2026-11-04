@@ -147,3 +147,20 @@ class Notification(Base):
     message: Mapped[str] = mapped_column(String(500), nullable=False)
     is_read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
+
+
+class ContentReport(Base):
+    __tablename__ = "content_reports"
+    __table_args__ = (UniqueConstraint("reporter_id", "target_type", "target_id", name="uq_reporter_target"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    reporter_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    reviewer_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True, nullable=True)
+    target_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    target_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    reason: Mapped[str] = mapped_column(String(40), nullable=False)
+    details: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
+    resolution_note: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
