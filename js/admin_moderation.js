@@ -34,7 +34,7 @@ function render(items) {
     const details = document.createElement("p");
     details.textContent = report.details || "No additional details.";
     const target = document.createElement("a");
-    target.href = report.target_type === "video" ? `/watch/${encodeURIComponent(report.target_id)}` : "#";
+    target.href = report.target_url || (report.target_type === "video" ? `/watch/${encodeURIComponent(report.target_id)}` : "#");
     target.textContent = report.target_type === "video" ? "Open video" : `Comment ID: ${report.target_id}`;
     card.append(heading, meta, details, target);
     if (["open", "reviewing"].includes(report.status)) {
