@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 from db.session import engine
 
@@ -11,4 +11,4 @@ async def ready():
             connection.execute(text("SELECT 1"))
         return {"status": "ready", "database": "available"}
     except Exception:
-        return {"status": "degraded", "database": "unavailable"}
+        raise HTTPException(status_code=503, detail={"status": "degraded", "database": "unavailable"})
