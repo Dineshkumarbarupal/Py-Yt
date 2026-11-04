@@ -97,6 +97,17 @@ async def studio_section_page(request: Request, studio_section: str):
     }
     if studio_section not in studio_sections:
         return JSONResponse({"detail": "Not found."}, status_code=404)
+    page_templates = {
+        "content": "studio_content.html",
+        "analytics": "studio_analytics.html",
+        "comments": "studio_comments.html",
+    }
+    if studio_section in page_templates:
+        return templates.TemplateResponse(
+            request=request,
+            name=page_templates[studio_section],
+            context={},
+        )
     title, description = studio_sections[studio_section]
     return templates.TemplateResponse(request=request, name="section.html", context={"title": title, "description": description})
 
