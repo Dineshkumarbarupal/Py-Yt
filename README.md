@@ -12,13 +12,14 @@ The original repository was empty. A modular FastAPI/MySQL web foundation has no
 - MySQL SQLAlchemy models and Alembic migrations for users, channels, videos, playlists, subscriptions, reactions, comments and watch history.
 - Registration/login/logout/current-user APIs with Argon2 password hashing and cookie-based JWT sessions.
 - Channel profile APIs, public video catalog/search/feed and category filtering.
-- Playlist CRUD basics, channel subscriptions, comments, reactions and watch-progress APIs.
+- Playlist creation/list/detail, channel subscriptions and a latest-from-subscriptions feed, comments, reactions, Watch Later, history and watch-progress APIs.
+- Creator Studio overview, creator-owned content list, basic video analytics and comment hide/restore workflows.
 - Presigned direct-to-S3-compatible video upload, object metadata verification and expiring signed playback URLs.
 - Dockerfile, Docker Compose, Nginx configuration and GitHub Actions CI workflow.
 - Architecture, feature roadmap, API, security, development and deployment documentation.
 
 ### Not yet implemented or verified
-Shorts feed, video transcoding/HLS renditions, live streaming/chat, recommendations, YouTube-style full player controls, captions pipeline, Studio analytics, custom thumbnails, advanced moderation/admin, notification delivery, monetization, MFA/recovery and enterprise/global infrastructure are roadmap items. A feature is not complete just because its route or UI placeholder exists.
+Shorts feed, video transcoding/HLS renditions, live streaming/chat, recommendations, advanced player controls, caption pipeline, retention/traffic-source analytics, custom thumbnails, full moderation/admin, notification delivery, monetization, MFA/recovery and enterprise/global infrastructure are roadmap items. A feature is not complete just because its route or UI placeholder exists.
 
 ## Technology
 - Frontend: HTML5, CSS3, vanilla JavaScript ES modules
