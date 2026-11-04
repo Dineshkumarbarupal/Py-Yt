@@ -100,9 +100,7 @@ def test_subscription_lifecycle(client):
     second_client.post("/api/v1/auth/logout", headers={"X-CSRF-Token": csrf})
 
     second = register(second_client, "creator@example.com", "Creator Two")
-    with SessionLocal() as db:
-        channel = db.query(Channel).filter(Channel.owner_id == second["id"]).one()
-        channel_id = channel.id
+    video_id, channel_id = create_public_video(second)
 
     # Sign back in as the subscriber.
     second_client.post("/api/v1/auth/logout", headers={"X-CSRF-Token": second_client.cookies.get("pyyt_csrf")})
@@ -121,3 +119,7 @@ def test_subscription_lifecycle(client):
     listing = second_client.get("/api/v1/subscriptions")
     assert listing.status_code == 200
     assert listing.json()["items"][0]["channel_id"] == channel_id
+
+    feed = second_client.get("/api/v1/subscriptions/feed")
+    assert feed.status_code == 200
+    assert [item["id"] for item in feed.json()["items"]] == [video_id]
