@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 from db.models import Channel, Subscription, User, Video
+from services.notifications import notify
 from db.session import get_db
 from core.dependencies import get_current_user
 
@@ -76,6 +77,15 @@ def subscribe(channel_id: str, db: Session = Depends(get_db), user: User = Depen
     if existing:
         return {"status": "already_subscribed"}
     db.add(Subscription(subscriber_id=user.id, channel_id=channel_id))
+    notify(
+        db,
+        recipient_id=channel.owner_id,
+        actor_id=user.id,
+        notification_type="new_subscriber",
+        entity_type="channel",
+        entity_id=channel.id,
+        message=f"{user.display_name} subscribed to your channel.",
+    )
     db.commit()
     return {"status": "subscribed"}
 
