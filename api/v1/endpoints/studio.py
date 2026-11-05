@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import desc, func, select
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.orm import Session
 from db.models import Comment, Subscription, User, Video
 from db.session import get_db
@@ -40,16 +40,34 @@ def overview(db: Session = Depends(get_db), user: User = Depends(get_current_use
 
 @router.get("/videos")
 def creator_videos(
-    limit: int = Query(default=50, ge=1, le=100),
+    limit: int = Query(default=30, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    q: str | None = Query(default=None, max_length=200),
+    status_filter: str | None = Query(default=None, alias="status", pattern="^(uploading|ready|published|failed|deleted|removed)$"),
+    visibility: str | None = Query(default=None, pattern="^(public|unlisted|private)$"),
+    video_format: str | None = Query(default=None, pattern="^(standard|short)$"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     channel = get_owned_channel(db, user)
+    conditions = [Video.channel_id == channel.id]
+    if q and q.strip():
+        pattern = f"%{q.strip()}%"
+        conditions.append(or_(Video.title.ilike(pattern), Video.description.ilike(pattern)))
+    if status_filter:
+        conditions.append(Video.status == status_filter)
+    if visibility:
+        conditions.append(Video.visibility == visibility)
+    if video_format:
+        conditions.append(Video.video_format == video_format)
+
+    total_count = db.scalar(
+        select(func.count(Video.id)).where(*conditions)
+    ) or 0
     videos = db.scalars(
         select(Video)
-        .where(Video.channel_id == channel.id)
-        .order_by(desc(Video.created_at))
+        .where(*conditions)
+        .order_by(desc(Video.created_at), desc(Video.id))
         .offset(offset)
         .limit(limit)
     ).all()
@@ -69,8 +87,10 @@ def creator_videos(
             }
             for video in videos
         ],
+        "total_count": total_count,
         "limit": limit,
         "offset": offset,
+        "next_offset": offset + len(videos) if offset + len(videos) < total_count else None,
     }
 
 @router.get("/analytics")
