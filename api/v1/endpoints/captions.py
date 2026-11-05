@@ -1,7 +1,7 @@
 import re
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 from starlette.responses import PlainTextResponse
@@ -25,6 +25,14 @@ class CaptionUpsert(BaseModel):
     label: str = Field(min_length=1, max_length=80)
     vtt_content: str = Field(min_length=1, max_length=MAX_VTT_CHARS)
     is_default: bool = False
+
+    @model_validator(mode="after")
+    def validate_non_blank_labels(self):
+        if not self.language.strip():
+            raise ValueError("Language code cannot be blank.")
+        if not self.label.strip():
+            raise ValueError("Caption label cannot be blank.")
+        return self
 
 
 def _video_access(
