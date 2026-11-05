@@ -22,7 +22,8 @@ Py-Yt is an independent video platform inspired by YouTube's product categories.
 | In-app notifications for new videos, subscribers, comments and replies | Implemented in code with unread/read controls |
 | Playback speed, theater mode, keyboard shortcuts, picture-in-picture, in-page mini-player, share, like/dislike, autoplay, latest Up next list and session Watch Queue | Implemented in code |
 | Native multilingual WebVTT subtitle tracks with Creator Studio upload, language labels and default selection | Basic implementation in code |
-| Adaptive quality selector and chapter markers | Planned |
+| Owner-managed chapter markers, chapter timeline on Watch page and timestamp seeking | Basic implementation in code |
+| Adaptive quality selector | Planned |
 | Video/comment reporting and admin moderation queue | Basic implementation in code |
 | Sharing | Implemented in code |
 | User blocking, advanced privacy controls and appeals | Planned |
@@ -45,7 +46,7 @@ Py-Yt is an independent video platform inspired by YouTube's product categories.
 | Upload metadata verification and publish lifecycle | Implemented in code; security checks still need expansion |
 | Video title/category/visibility editing and owner-only deletion | Basic API and Studio UI implemented |
 | Custom thumbnails: direct signed image upload, JPEG/PNG/WebP signature verification and Creator Studio replacement | Basic implementation in code; MEDIA_PUBLIC_BASE_URL required |
-| Scheduled publishing, chapters, end screens/cards | Planned |
+| Scheduled publishing, end screens/cards | Planned |
 | Basic creator analytics: total view counters and top videos | Implemented in code |
 | Advanced retention, traffic sources and audience analytics | Planned |
 | Creator hide/restore comment controls | Basic API and UI implemented |
