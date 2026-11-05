@@ -83,3 +83,10 @@ def test_studio_content_filter_controls_render(client):
     assert 'id="studio-visibility-filter"' in response.text
     assert 'id="studio-format-filter"' in response.text
     assert 'id="studio-load-more"' in response.text
+
+
+def test_upload_page_includes_optional_custom_thumbnail_picker(client):
+    response = client.get("/studio/upload")
+    assert response.status_code == 200
+    assert 'id="thumbnail-file"' in response.text
+    assert "image/jpeg,image/png,image/webp" in response.text
