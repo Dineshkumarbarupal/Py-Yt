@@ -94,3 +94,44 @@ def test_upload_page_includes_optional_custom_thumbnail_picker(client):
     assert response.status_code == 200
     assert 'id="thumbnail-file"' in response.text
     assert "image/jpeg,image/png,image/webp" in response.text
+
+
+def test_home_and_channel_cards_render_working_watch_later_actions(client):
+    registration = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "video-card-actions@example.com",
+            "display_name": "Video Card Owner",
+            "password": "A-very-strong-test-password-31",
+        },
+    )
+    assert registration.status_code == 201
+
+    from db.models import Channel, Video
+    from db.session import SessionLocal
+
+    with SessionLocal() as db:
+        channel = db.query(Channel).filter(Channel.owner_id == registration.json()["id"]).one()
+        video = Video(
+            channel_id=channel.id,
+            title="Video card action test",
+            description="",
+            category="Learning",
+            source_type="upload",
+            storage_key=f"video-card-actions/{registration.json()['id']}/video.mp4",
+            mime_type="video/mp4",
+            file_size_bytes=1024,
+            visibility="public",
+            status="published",
+        )
+        db.add(video)
+        db.commit()
+        video_id = video.id
+        handle = channel.handle
+
+    for path in ["/", f"/@{handle}"]:
+        response = client.get(path)
+        assert response.status_code == 200
+        assert f'data-watch-later="{video_id}"' in response.text
+        assert 'data-queue-add' in response.text
+        assert 'class="more-button"' not in response.text
