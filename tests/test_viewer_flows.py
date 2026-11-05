@@ -177,6 +177,11 @@ def test_subscription_lifecycle(client):
     assert listing.status_code == 200
     assert listing.json()["items"][0]["channel_id"] == channel_id
 
+    public_channel = second_client.get(f"/api/v1/channels/{listing.json()['items'][0]['handle']}")
+    assert public_channel.status_code == 200
+    assert public_channel.json()["subscriber_count"] == 1
+    assert public_channel.json()["video_count"] == 1
+
     feed = second_client.get("/api/v1/subscriptions/feed")
     assert feed.status_code == 200
     assert [item["id"] for item in feed.json()["items"]] == [video_id]
