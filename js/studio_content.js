@@ -169,7 +169,140 @@ function createVideoCard(video) {
   });
 
   actions.append(save, remove);
-  card.append(thumbnailPanel, info, category, format, visibility, actions);
+  const captionDetails = document.createElement("details");
+  captionDetails.className = "studio-caption-panel";
+  const captionSummary = document.createElement("summary");
+  captionSummary.textContent = "Captions / subtitles";
+  const captionList = document.createElement("div");
+  captionList.className = "studio-caption-list";
+  const captionForm = document.createElement("form");
+  captionForm.className = "studio-caption-form";
+
+  const languageInput = document.createElement("input");
+  languageInput.type = "text";
+  languageInput.value = "en";
+  languageInput.maxLength = 20;
+  languageInput.required = true;
+  languageInput.pattern = "[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*";
+  languageInput.setAttribute("aria-label", "Language code");
+
+  const labelInput = document.createElement("input");
+  labelInput.type = "text";
+  labelInput.value = "English";
+  labelInput.maxLength = 80;
+  labelInput.required = true;
+  labelInput.setAttribute("aria-label", "Caption language label");
+
+  const captionFile = document.createElement("input");
+  captionFile.type = "file";
+  captionFile.accept = ".vtt,text/vtt";
+  captionFile.required = true;
+  captionFile.setAttribute("aria-label", "WebVTT caption file");
+
+  const defaultLabel = document.createElement("label");
+  defaultLabel.className = "studio-caption-default";
+  const defaultInput = document.createElement("input");
+  defaultInput.type = "checkbox";
+  defaultLabel.append(defaultInput, document.createTextNode("Default language"));
+
+  const captionSubmit = document.createElement("button");
+  captionSubmit.type = "submit";
+  captionSubmit.className = "secondary-button";
+  captionSubmit.textContent = "Upload captions";
+  const captionStatus = document.createElement("p");
+  captionStatus.className = "muted";
+  captionStatus.setAttribute("role", "status");
+
+  const languageField = document.createElement("label");
+  languageField.textContent = "Language code";
+  languageField.append(languageInput);
+  const labelField = document.createElement("label");
+  labelField.textContent = "Display label";
+  labelField.append(labelInput);
+  const fileField = document.createElement("label");
+  fileField.textContent = "WebVTT file (.vtt)";
+  fileField.append(captionFile);
+  captionForm.append(languageField, labelField, fileField, defaultLabel, captionSubmit, captionStatus);
+
+  async function loadCaptionTracks() {
+    captionList.replaceChildren();
+    try {
+      const result = await apiRequest("/videos/" + encodeURIComponent(video.id) + "/captions");
+      if (!result.items?.length) {
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "No caption tracks yet.";
+        captionList.append(empty);
+        return;
+      }
+      for (const track of result.items) {
+        const row = document.createElement("div");
+        row.className = "studio-caption-row";
+        const name = document.createElement("span");
+        name.textContent = track.label + " (" + track.language + ")" + (track.is_default ? " · Default" : "");
+        const removeTrack = document.createElement("button");
+        removeTrack.type = "button";
+        removeTrack.className = "secondary-button danger-button";
+        removeTrack.textContent = "Remove";
+        removeTrack.addEventListener("click", async () => {
+          removeTrack.disabled = true;
+          try {
+            await apiRequest("/videos/" + encodeURIComponent(video.id) + "/captions/" + encodeURIComponent(track.id), {
+              method: "DELETE",
+            });
+            await loadCaptionTracks();
+            captionStatus.textContent = "Caption track removed.";
+          } catch (error) {
+            captionStatus.textContent = error.message;
+            removeTrack.disabled = false;
+          }
+        });
+        row.append(name, removeTrack);
+        captionList.append(row);
+      }
+    } catch (error) {
+      captionStatus.textContent = error.message;
+    }
+  }
+
+  captionDetails.addEventListener("toggle", () => {
+    if (captionDetails.open) loadCaptionTracks();
+  });
+  captionForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const file = captionFile.files?.[0];
+    if (!file || !file.name.toLowerCase().endsWith(".vtt")) {
+      captionStatus.textContent = "Choose a WebVTT .vtt file.";
+      return;
+    }
+    if (file.size <= 0 || file.size > 1_000_000) {
+      captionStatus.textContent = "Caption files must be smaller than 1 MB.";
+      return;
+    }
+    captionSubmit.disabled = true;
+    captionStatus.textContent = "Validating and saving captions…";
+    try {
+      await apiRequest("/videos/" + encodeURIComponent(video.id) + "/captions", {
+        method: "PUT",
+        body: JSON.stringify({
+          language: languageInput.value.trim(),
+          label: labelInput.value.trim(),
+          vtt_content: await file.text(),
+          is_default: defaultInput.checked,
+        }),
+      });
+      captionFile.value = "";
+      captionStatus.textContent = "Caption track saved.";
+      await loadCaptionTracks();
+    } catch (error) {
+      captionStatus.textContent = error.message;
+    } finally {
+      captionSubmit.disabled = false;
+    }
+  });
+  captionDetails.append(captionSummary, captionList, captionForm);
+
+  card.append(thumbnailPanel, info, category, format, visibility, actions, captionDetails);
   return card;
 }
 
