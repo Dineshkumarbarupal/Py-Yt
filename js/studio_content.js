@@ -302,7 +302,120 @@ function createVideoCard(video) {
   });
   captionDetails.append(captionSummary, captionList, captionForm);
 
-  card.append(thumbnailPanel, info, category, format, visibility, actions, captionDetails);
+
+  const chapterDetails = document.createElement("details");
+  chapterDetails.className = "studio-chapter-panel";
+  const chapterSummary = document.createElement("summary");
+  chapterSummary.textContent = "Video chapters";
+  const chapterForm = document.createElement("form");
+  chapterForm.className = "studio-chapter-form";
+  const chapterInput = document.createElement("textarea");
+  chapterInput.rows = 5;
+  chapterInput.maxLength = 20000;
+  chapterInput.placeholder = "00:00 | Introduction\\n01:35 | Main topic\\n04:20 | Summary";
+  chapterInput.setAttribute("aria-label", "Video chapters in timestamp and title format");
+  const chapterHelp = document.createElement("p");
+  chapterHelp.className = "muted";
+  chapterHelp.textContent = "One chapter per line: MM:SS | Title. The first chapter starts at 00:00.";
+  const chapterStatus = document.createElement("p");
+  chapterStatus.className = "muted";
+  chapterStatus.setAttribute("role", "status");
+  const chapterSave = document.createElement("button");
+  chapterSave.type = "submit";
+  chapterSave.className = "secondary-button";
+  chapterSave.textContent = "Save chapters";
+  const chapterClear = document.createElement("button");
+  chapterClear.type = "button";
+  chapterClear.className = "secondary-button";
+  chapterClear.textContent = "Clear chapters";
+  const chapterActions = document.createElement("div");
+  chapterActions.className = "studio-chapter-actions";
+  chapterActions.append(chapterSave, chapterClear);
+  chapterForm.append(chapterInput, chapterHelp, chapterActions, chapterStatus);
+
+  function parseChapterTime(value) {
+    const parts = value.trim().split(":").map(Number);
+    if (parts.length !== 2 && parts.length !== 3) return null;
+    if (parts.some((part) => !Number.isInteger(part) || part < 0)) return null;
+    if (parts.length === 2) {
+      const [minutes, seconds] = parts;
+      if (seconds > 59) return null;
+      return minutes * 60 + seconds;
+    }
+    const [hours, minutes, seconds] = parts;
+    if (minutes > 59 || seconds > 59) return null;
+    return hours * 3600 + minutes * 60 + seconds;
+  }
+
+  function formatChapterTime(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remaining = seconds % 60;
+    const pad = (value) => String(value).padStart(2, "0");
+    return hours
+      ? `${pad(hours)}:${pad(minutes)}:${pad(remaining)}`
+      : `${pad(minutes)}:${pad(remaining)}`;
+  }
+
+  async function loadChapterList() {
+    chapterStatus.textContent = "";
+    try {
+      const result = await apiRequest("/videos/" + encodeURIComponent(video.id) + "/chapters");
+      chapterInput.value = (result.items || [])
+        .map((item) => `${formatChapterTime(item.start_seconds)} | ${item.title}`)
+        .join("\\n");
+    } catch (error) {
+      chapterStatus.textContent = error.message;
+    }
+  }
+
+  chapterDetails.addEventListener("toggle", () => {
+    if (chapterDetails.open) loadChapterList();
+  });
+  chapterForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const lines = chapterInput.value.split(/\\r?\\n/).map((line) => line.trim()).filter(Boolean);
+    const items = [];
+    for (const line of lines) {
+      const separator = line.indexOf("|");
+      if (separator < 0) {
+        chapterStatus.textContent = "Each line must use timestamp | title.";
+        return;
+      }
+      const start = parseChapterTime(line.slice(0, separator));
+      const titleText = line.slice(separator + 1).trim();
+      if (start === null || !titleText) {
+        chapterStatus.textContent = "Enter a valid timestamp and non-empty title on each line.";
+        return;
+      }
+      items.push({ start_seconds: start, title: titleText });
+    }
+    if (items.length && items[0].start_seconds !== 0) {
+      chapterStatus.textContent = "The first chapter must start at 00:00.";
+      return;
+    }
+    chapterSave.disabled = true;
+    chapterStatus.textContent = "Saving chapters…";
+    try {
+      await apiRequest("/videos/" + encodeURIComponent(video.id) + "/chapters", {
+        method: "PUT",
+        body: JSON.stringify({ items }),
+      });
+      chapterStatus.textContent = items.length ? "Chapters saved." : "Chapter list cleared.";
+      await loadChapterList();
+    } catch (error) {
+      chapterStatus.textContent = error.message;
+    } finally {
+      chapterSave.disabled = false;
+    }
+  });
+  chapterClear.addEventListener("click", () => {
+    chapterInput.value = "";
+    chapterForm.requestSubmit();
+  });
+  chapterDetails.append(chapterSummary, chapterForm);
+
+  card.append(thumbnailPanel, info, category, format, visibility, actions, captionDetails, chapterDetails);
   return card;
 }
 
