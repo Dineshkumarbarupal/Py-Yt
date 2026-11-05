@@ -88,7 +88,8 @@ function renderVideos(items, emptyMessage = "No videos found.") {
     watchLaterButton.type = "button";
     watchLaterButton.className = "queue-add-button";
     watchLaterButton.textContent = "◷ Watch later";
-    watchLaterButton.dataset.watchLater = video.id;\n    watchLaterButton.setAttribute("aria-label", "Save video to Watch Later");
+    watchLaterButton.dataset.watchLater = video.id;
+    watchLaterButton.setAttribute("aria-label", "Save video to Watch Later");
     const cardActions = document.createElement("div");
     cardActions.className = "video-card-actions";
     cardActions.append(queueButton, watchLaterButton);
