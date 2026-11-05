@@ -74,12 +74,19 @@ def replace_chapters(
 
     items = payload.items
     starts = [item.start_seconds for item in items]
+    if items and len(items) < 3:
+        raise HTTPException(status_code=422, detail="A chapter list must contain at least three timestamps.")
     if starts != sorted(starts) or len(starts) != len(set(starts)):
         raise HTTPException(status_code=422, detail="Chapter timestamps must be unique and in ascending order.")
     if items and items[0].start_seconds != 0:
         raise HTTPException(status_code=422, detail="The first chapter must start at 00:00.")
-    if video.duration_seconds is not None and any(item.start_seconds >= video.duration_seconds for item in items):
-        raise HTTPException(status_code=422, detail="Chapter timestamps must be inside the video duration.")
+    if any((right - left) < 10 for left, right in zip(starts, starts[1:])):
+        raise HTTPException(status_code=422, detail="Each chapter must be at least 10 seconds long.")
+    if video.duration_seconds is not None and items:
+        if any(item.start_seconds >= video.duration_seconds for item in items):
+            raise HTTPException(status_code=422, detail="Chapter timestamps must be inside the video duration.")
+        if video.duration_seconds - items[-1].start_seconds < 10:
+            raise HTTPException(status_code=422, detail="The last chapter must be at least 10 seconds long.")
 
     db.query(VideoChapter).filter(VideoChapter.video_id == video.id).delete(synchronize_session=False)
     db.add_all([
