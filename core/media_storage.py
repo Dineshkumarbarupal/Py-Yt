@@ -48,7 +48,9 @@ def create_playback_url(object_key: str, expires_in: int = 600) -> str:
 
 
 def inspect_uploaded_image(object_key: str) -> dict:
-    response = client().get_object(
+    storage = client()
+    metadata = storage.head_object(Bucket=settings.media_bucket, Key=object_key)
+    response = storage.get_object(
         Bucket=settings.media_bucket,
         Key=object_key,
         Range="bytes=0-31",
@@ -59,7 +61,7 @@ def inspect_uploaded_image(object_key: str) -> dict:
     finally:
         body.close()
     return {
-        "ContentLength": response.get("ContentLength"),
-        "ContentType": response.get("ContentType"),
+        "ContentLength": metadata.get("ContentLength"),
+        "ContentType": metadata.get("ContentType"),
         "Signature": signature,
     }
