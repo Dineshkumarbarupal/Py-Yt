@@ -147,9 +147,9 @@ def complete_thumbnail_upload(
     content_length = metadata.get("ContentLength")
     signature = metadata.get("Signature", b"")
     valid_signature = (
-        content_type == "image/jpeg" and signature.startswith(b"\\xff\\xd8\\xff")
+        content_type == "image/jpeg" and signature.startswith(bytes([0xFF, 0xD8, 0xFF]))
     ) or (
-        content_type == "image/png" and signature.startswith(b"\\x89PNG\\r\\n\\x1a\\n")
+        content_type == "image/png" and signature.startswith(bytes([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))
     ) or (
         content_type == "image/webp"
         and signature[:4] == b"RIFF"
