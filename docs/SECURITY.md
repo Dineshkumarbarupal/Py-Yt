@@ -12,7 +12,7 @@
 - Presigned PUT URLs for supported video MIME types.
 - Upload completion checks storage ContentLength and ContentType; mismatched uploaded objects are rejected and deletion is attempted.
 - Private video playback requires channel-owner identity and returns an expiring signed URL.
-- Basic response security headers.
+- Basic response security headers, including an explicit `media-src` allowance for HTTPS S3-compatible signed playback URLs and blob-backed media.
 
 ## Required before production launch
 - Generate a unique high-entropy SECRET_KEY and rotate it through secret management.
