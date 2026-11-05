@@ -52,6 +52,18 @@ def test_creator_studio_dashboard_and_comment_moderation(client, monkeypatch):
     content = client.get("/api/v1/studio/videos")
     assert content.status_code == 200
     assert content.json()["items"][0]["id"] == video_id
+    assert content.json()["total_count"] == 1
+    assert content.json()["next_offset"] is None
+
+    filtered = client.get("/api/v1/studio/videos?q=Studio&status=published&visibility=public&video_format=standard")
+    assert filtered.status_code == 200
+    assert [item["id"] for item in filtered.json()["items"]] == [video_id]
+    assert filtered.json()["total_count"] == 1
+
+    no_match = client.get("/api/v1/studio/videos?q=missing-title")
+    assert no_match.status_code == 200
+    assert no_match.json()["items"] == []
+    assert no_match.json()["total_count"] == 0
 
     analytics = client.get("/api/v1/studio/analytics")
     assert analytics.status_code == 200
