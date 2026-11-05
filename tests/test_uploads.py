@@ -15,24 +15,26 @@ def test_upload_verify_publish_and_playback(client, monkeypatch):
 
     monkeypatch.setattr(uploads_module.settings, "media_public_base_url", "https://media.example.test")
     monkeypatch.setattr(uploads_module.settings, "media_thumbnail_bucket", "pyyt-thumbnails")
-    monkeypatch.setattr(
-        uploads_module,
-        "create_upload_url",
-        lambda object_key, content_type, bucket_name=None: "https://storage.example.test/presigned-upload",
-    )
+    upload_targets = []
+    def signed_upload(object_key, content_type, bucket_name=None):
+        upload_targets.append(bucket_name)
+        return "https://storage.example.test/presigned-upload"
+
+    monkeypatch.setattr(uploads_module, "create_upload_url", signed_upload)
     def inspect_video_object(object_key):
         return {"ContentLength": 2048, "ContentType": "video/mp4"}
 
     monkeypatch.setattr(uploads_module, "inspect_uploaded_object", inspect_video_object)
-    monkeypatch.setattr(
-        uploads_module,
-        "inspect_uploaded_image",
-        lambda object_key, bucket_name=None: {
+    image_buckets = []
+    def inspect_image(object_key, bucket_name=None):
+        image_buckets.append(bucket_name)
+        return {
             "ContentLength": 4096,
             "ContentType": "image/webp",
             "Signature": b"RIFFxxxxWEBPVP8 ",
-        },
-    )
+        }
+
+    monkeypatch.setattr(uploads_module, "inspect_uploaded_image", inspect_image)
     monkeypatch.setattr(
         videos_module,
         "create_playback_url",
@@ -79,6 +81,8 @@ def test_upload_verify_publish_and_playback(client, monkeypatch):
     assert thumbnail_complete.json()["thumbnail_url"].startswith(
         "https://media.example.test/thumbnails/"
     )
+    assert upload_targets == [None, "pyyt-thumbnails"]
+    assert image_buckets == ["pyyt-thumbnails"]
 
     published = client.post(
         f"/api/v1/videos/{video_id}/publish",
