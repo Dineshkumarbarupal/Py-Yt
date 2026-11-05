@@ -428,6 +428,27 @@ reportForm?.addEventListener("submit", async (event) => {
 });
 
 
+async function loadCaptionTracks() {
+  if (!player || !videoId) return;
+  try {
+    const result = await apiRequest("/videos/" + encodeURIComponent(videoId) + "/captions");
+    player.querySelectorAll('track[data-pyyt-caption="true"]').forEach((node) => node.remove());
+    for (const caption of result.items || []) {
+      const track = document.createElement("track");
+      track.kind = "subtitles";
+      track.label = caption.label;
+      track.srclang = caption.language;
+      track.src = caption.vtt_url;
+      track.dataset.pyytCaption = "true";
+      if (caption.is_default) track.setAttribute("default", "");
+      player.append(track);
+    }
+  } catch {
+    // Captions are optional; keep playback available if no tracks are published.
+  }
+}
+
 initializePlayer();
 loadComments();
 loadUpNext();
+loadCaptionTracks();
