@@ -13,15 +13,24 @@ def test_upload_verify_publish_and_playback(client, monkeypatch):
     import api.v1.endpoints.uploads as uploads_module
     import api.v1.endpoints.videos as videos_module
 
+    monkeypatch.setattr(uploads_module.settings, "media_public_base_url", "https://media.example.test")
     monkeypatch.setattr(
         uploads_module,
         "create_upload_url",
         lambda object_key, content_type: "https://storage.example.test/presigned-upload",
     )
+    def inspect_video_object(object_key):
+        return {"ContentLength": 2048, "ContentType": "video/mp4"}
+
+    monkeypatch.setattr(uploads_module, "inspect_uploaded_object", inspect_video_object)
     monkeypatch.setattr(
         uploads_module,
-        "inspect_uploaded_object",
-        lambda object_key: {"ContentLength": 2048, "ContentType": "video/mp4"},
+        "inspect_uploaded_image",
+        lambda object_key: {
+            "ContentLength": 4096,
+            "ContentType": "image/webp",
+            "Signature": b"RIFFxxxxWEBPVP8 ",
+        },
     )
     monkeypatch.setattr(
         videos_module,
@@ -53,6 +62,23 @@ def test_upload_verify_publish_and_playback(client, monkeypatch):
     assert complete.status_code == 200
     assert complete.json()["status"] == "ready"
 
+    thumbnail_presign = client.post(
+        f"/api/v1/uploads/{video_id}/thumbnail/presign",
+        json={"content_type": "image/webp", "file_size_bytes": 4096},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert thumbnail_presign.status_code == 201
+    assert thumbnail_presign.json()["headers"]["Content-Type"] == "image/webp"
+
+    thumbnail_complete = client.post(
+        f"/api/v1/uploads/{video_id}/thumbnail/complete",
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert thumbnail_complete.status_code == 200
+    assert thumbnail_complete.json()["thumbnail_url"].startswith(
+        "https://media.example.test/thumbnails/"
+    )
+
     published = client.post(
         f"/api/v1/videos/{video_id}/publish",
         json={"visibility": "public"},
@@ -76,6 +102,19 @@ def test_upload_rejects_unsupported_content_type(client):
         },
     )
     csrf = client.cookies.get("pyyt_csrf")
+    invalid_thumbnail = client.post(
+        f"/api/v1/uploads/invalid-video/thumbnail/presign",
+        json={"content_type": "image/svg+xml", "file_size_bytes": 100},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert invalid_thumbnail.status_code == 415
+    oversized_thumbnail = client.post(
+        "/api/v1/uploads/invalid-video/thumbnail/presign",
+        json={"content_type": "image/jpeg", "file_size_bytes": 6 * 1024 * 1024},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert oversized_thumbnail.status_code == 413
+
     response = client.post(
         "/api/v1/uploads/presign",
         json={
