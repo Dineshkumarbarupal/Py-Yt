@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from api.v1.endpoints import admin, auth, channels, comments, discovery, engagement, health, library, notifications, playlists, reports, studio, subscriptions, uploads, videos
+from api.v1.endpoints import admin, auth, captions, channels, comments, discovery, engagement, health, library, notifications, playlists, reports, studio, subscriptions, uploads, videos
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["health"])
@@ -8,6 +8,7 @@ api_router.include_router(admin.router, tags=["admin"])
 api_router.include_router(auth.router, tags=["authentication"])
 api_router.include_router(channels.router, tags=["channels"])
 api_router.include_router(videos.router, tags=["videos"])
+api_router.include_router(captions.router, tags=["captions"])
 api_router.include_router(uploads.router, tags=["uploads"])
 api_router.include_router(playlists.router, tags=["playlists"])
 api_router.include_router(subscriptions.router, tags=["subscriptions"])
