@@ -165,3 +165,18 @@ class ContentReport(Base):
     resolution_note: Mapped[str] = mapped_column(String(500), nullable=False, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class VideoCaption(Base):
+    __tablename__ = "video_captions"
+    __table_args__ = (
+        UniqueConstraint("video_id", "language", name="uq_video_caption_language"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    video_id: Mapped[str] = mapped_column(ForeignKey("videos.id", ondelete="CASCADE"), index=True, nullable=False)
+    language: Mapped[str] = mapped_column(String(20), nullable=False)
+    label: Mapped[str] = mapped_column(String(80), nullable=False)
+    vtt_content: Mapped[str] = mapped_column(Text, nullable=False)
+    is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
