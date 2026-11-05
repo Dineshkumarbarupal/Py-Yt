@@ -119,6 +119,12 @@ def delete_video(
         raise HTTPException(status_code=404, detail="Video not found.")
     if video.status == "deleted":
         return Response(status_code=204)
+    if video.thumbnail_storage_key and (
+        not settings.media_thumbnail_bucket
+        or settings.media_thumbnail_bucket == settings.media_bucket
+    ):
+        raise HTTPException(status_code=503, detail="Configure a separate MEDIA_THUMBNAIL_BUCKET before deleting this video's custom thumbnail.")
+
     storage_objects = []
     if video.storage_key:
         storage_objects.append((video.storage_key, None))
