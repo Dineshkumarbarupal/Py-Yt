@@ -104,7 +104,11 @@ def presign_thumbnail_upload(
 
     object_key = f"thumbnails/{channel.id}/{video.id}/cover"
     try:
-        upload_url = create_upload_url(object_key, payload.content_type)
+        upload_url = create_upload_url(
+            object_key,
+            payload.content_type,
+            bucket_name=settings.media_thumbnail_bucket,
+        )
     except MediaStorageNotConfigured as exc:
         raise HTTPException(status_code=503, detail=str(exc))
     except (BotoCoreError, ClientError):
@@ -137,7 +141,7 @@ def complete_thumbnail_upload(
 
     object_key = f"thumbnails/{channel.id}/{video.id}/cover"
     try:
-        metadata = inspect_uploaded_image(object_key)
+        metadata = inspect_uploaded_image(object_key, bucket_name=settings.media_thumbnail_bucket)
     except MediaStorageNotConfigured as exc:
         raise HTTPException(status_code=503, detail=str(exc))
     except (BotoCoreError, ClientError):
@@ -163,7 +167,7 @@ def complete_thumbnail_upload(
         or content_length > THUMBNAIL_MAX_BYTES
     ):
         try:
-            delete_object(object_key)
+            delete_object(object_key, bucket_name=settings.media_thumbnail_bucket)
         except (MediaStorageNotConfigured, BotoCoreError, ClientError):
             raise HTTPException(status_code=502, detail="Thumbnail validation failed and the object could not be cleaned up.")
         raise HTTPException(status_code=422, detail="Uploaded thumbnail must contain a valid JPEG, PNG or WebP signature and be 5 MB or smaller.")
