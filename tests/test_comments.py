@@ -172,3 +172,56 @@ def test_comment_owner_can_edit_and_delete_but_other_users_cannot(client):
     listing = client.get(f"/api/v1/comments/video/{video_id}")
     assert listing.status_code == 200
     assert listing.json()["items"] == []
+
+def test_comment_sort_newest_and_oldest(client):
+    from datetime import datetime
+    from db.models import Comment
+
+    owner = register(
+        client,
+        "comment-sort-owner@example.com",
+        "Comment Sort Owner",
+        "A-very-strong-test-password-22",
+    )
+    with SessionLocal() as db:
+        channel = db.query(Channel).filter(Channel.owner_id == owner["id"]).one()
+        video = Video(
+            channel_id=channel.id,
+            title="Comment sorting video",
+            description="",
+            category="Learning",
+            source_type="upload",
+            storage_key=f"comment-sort/{owner['id']}/video.mp4",
+            mime_type="video/mp4",
+            file_size_bytes=128,
+            visibility="public",
+            status="published",
+        )
+        db.add(video)
+        db.flush()
+        older = Comment(
+            user_id=owner["id"],
+            video_id=video.id,
+            body="Older comment",
+            created_at=datetime(2025, 1, 1, 10, 0, 0),
+        )
+        newer = Comment(
+            user_id=owner["id"],
+            video_id=video.id,
+            body="Newer comment",
+            created_at=datetime(2025, 1, 2, 10, 0, 0),
+        )
+        db.add_all([older, newer])
+        db.commit()
+        video_id = video.id
+
+    newest = client.get(f"/api/v1/comments/video/{video_id}?sort=newest")
+    assert newest.status_code == 200
+    assert [item["body"] for item in newest.json()["items"]] == ["Newer comment", "Older comment"]
+
+    oldest = client.get(f"/api/v1/comments/video/{video_id}?sort=oldest")
+    assert oldest.status_code == 200
+    assert [item["body"] for item in oldest.json()["items"]] == ["Older comment", "Newer comment"]
+
+    invalid = client.get(f"/api/v1/comments/video/{video_id}?sort=top")
+    assert invalid.status_code == 422
