@@ -49,6 +49,7 @@ function render(items) {
     info.append(title, meta);
 
     const category = selectControl("studio-category", categories, video.category || "General");
+    const format = selectControl("studio-format", ["standard", "short"], video.video_format || "standard");
     const visibility = selectControl("studio-visibility", ["public", "unlisted", "private"], video.visibility);
 
     const actions = document.createElement("div");
@@ -68,10 +69,11 @@ function render(items) {
           body: JSON.stringify({
             title: title.value.trim(),
             category: category.value,
+            video_format: format.value,
             visibility: visibility.value,
           }),
         });
-        meta.textContent = `${video.status} · ${Number(video.view_count || 0).toLocaleString()} views`;
+        meta.textContent = `${video.status} · ${format.value === "short" ? "Shorts" : "Standard"} · ${Number(video.view_count || 0).toLocaleString()} views`;
         status.textContent = "Video details saved.";
       } catch (error) {
         status.textContent = error.message;
@@ -96,7 +98,7 @@ function render(items) {
       }
     });
     actions.append(save, remove);
-    card.append(info, category, visibility, actions);
+    card.append(info, category, format, visibility, actions);
     list.append(card);
   }
 }
