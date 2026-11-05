@@ -72,3 +72,13 @@ def test_watch_page_exposes_player_controls_and_comment_threads(client):
     assert 'id="up-next-list"' in response.text
     assert 'id="queue-open"' in response.text
     assert 'id="queue-dialog"' in response.text
+
+
+def test_studio_content_filter_controls_render(client):
+    response = client.get("/studio/content")
+    assert response.status_code == 200
+    assert 'id="studio-search"' in response.text
+    assert 'id="studio-status-filter"' in response.text
+    assert 'id="studio-visibility-filter"' in response.text
+    assert 'id="studio-format-filter"' in response.text
+    assert 'id="studio-load-more"' in response.text
