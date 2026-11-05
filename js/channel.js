@@ -2,11 +2,22 @@ import { apiRequest } from "./api.js";
 
 const page = document.querySelector(".channel-page");
 const channelId = page?.dataset.channelId;
+const channelHandle = page?.dataset.channelHandle;
+const statLine = document.querySelector("#channel-stat-line");
 const button = document.querySelector("#subscribe-button");
 const status = document.querySelector("#subscribe-status");
 let subscribed = false;
 
 async function initialize() {
+  try {
+    const channel = await apiRequest(`/channels/${encodeURIComponent(channelHandle)}`);
+    if (statLine) {
+      const count = (value) => Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(Number(value || 0));
+      statLine.textContent = `${count(channel.subscriber_count)} subscribers · ${count(channel.video_count)} videos`;
+    }
+  } catch {
+    if (statLine) statLine.textContent = "";
+  }
   try {
     const result = await apiRequest("/subscriptions");
     subscribed = (result.items || []).some((item) => item.channel_id === channelId);
