@@ -17,7 +17,7 @@ For the current Phase 1 scope, Railway is the easiest initial target: it support
 1. Create a Railway project and connect your GitHub account.
 2. Add a MySQL service.
 3. Add a service from GitHub and select Dineshkumarbarupal/Py-Yt on branch main. Build using the root Dockerfile.
-4. Set environment variables: APP_ENV=production, a newly generated SECRET_KEY, CORS_ORIGINS for your production origin, SESSION_COOKIE_SECURE=true, and the MEDIA_* values for your S3/R2 bucket. Set DATABASE_URL using the private MySQL service variables, for example: mysql+pymysql://${{MySQL.MYSQLUSER}}:${{MySQL.MYSQLPASSWORD}}@${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}. URL-encode special characters in the database password before assembling the URL.
+4. Set environment variables: APP_ENV=production, DEBUG=false, a unique random SECRET_KEY of at least 32 characters, CORS_ORIGINS set to your exact production origin (no wildcard), SESSION_COOKIE_SECURE=true and SESSION_COOKIE_SAMESITE=lax, DATABASE_URL using MySQL PyMySQL, and MEDIA_BUCKET/MEDIA_ACCESS_KEY_ID/MEDIA_SECRET_ACCESS_KEY for your S3/R2 bucket. The app now refuses to boot with unsafe production settings. Set DATABASE_URL using the private MySQL service variables, for example: mysql+pymysql://${{MySQL.MYSQLUSER}}:${{MySQL.MYSQLPASSWORD}}@${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}. URL-encode special characters in the database password before assembling the URL.
 5. Set the pre-deploy command to: alembic upgrade head.
 6. Set the healthcheck path to /api/v1/ready (checks database connectivity), generate a domain, then attach your custom domain and HTTPS.
 7. Configure MySQL backups/point-in-time recovery where available and test restoring a backup.
