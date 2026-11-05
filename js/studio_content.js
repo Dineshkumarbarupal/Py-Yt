@@ -316,7 +316,7 @@ function createVideoCard(video) {
   chapterInput.setAttribute("aria-label", "Video chapters in timestamp and title format");
   const chapterHelp = document.createElement("p");
   chapterHelp.className = "muted";
-  chapterHelp.textContent = "One chapter per line: MM:SS | Title. The first chapter starts at 00:00.";
+  chapterHelp.textContent = "At least 3 chapters, first at 00:00, ascending timestamps and at least 10 seconds per chapter. Format: MM:SS | Title.";
   const chapterStatus = document.createElement("p");
   chapterStatus.className = "muted";
   chapterStatus.setAttribute("role", "status");
@@ -390,8 +390,16 @@ function createVideoCard(video) {
       }
       items.push({ start_seconds: start, title: titleText });
     }
+    if (items.length && items.length < 3) {
+      chapterStatus.textContent = "Add at least three chapters.";
+      return;
+    }
     if (items.length && items[0].start_seconds !== 0) {
       chapterStatus.textContent = "The first chapter must start at 00:00.";
+      return;
+    }
+    if (items.some((item, index) => index > 0 && item.start_seconds - items[index - 1].start_seconds < 10)) {
+      chapterStatus.textContent = "Each chapter must be at least 10 seconds long.";
       return;
     }
     chapterSave.disabled = true;
