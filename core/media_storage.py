@@ -45,3 +45,21 @@ def create_playback_url(object_key: str, expires_in: int = 600) -> str:
         Params={"Bucket": settings.media_bucket, "Key": object_key},
         ExpiresIn=expires_in,
     )
+
+
+def inspect_uploaded_image(object_key: str) -> dict:
+    response = client().get_object(
+        Bucket=settings.media_bucket,
+        Key=object_key,
+        Range="bytes=0-31",
+    )
+    body = response["Body"]
+    try:
+        signature = body.read(32)
+    finally:
+        body.close()
+    return {
+        "ContentLength": response.get("ContentLength"),
+        "ContentType": response.get("ContentType"),
+        "Signature": signature,
+    }
