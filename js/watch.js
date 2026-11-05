@@ -431,6 +431,7 @@ reportForm?.addEventListener("submit", async (event) => {
 
 const chaptersSection = document.querySelector("#video-chapters");
 const chaptersList = document.querySelector("#video-chapter-list");
+const currentChapterLabel = document.querySelector("#current-chapter-label");
 
 function formatChapterTime(value) {
   const seconds = Math.max(0, Number(value) || 0);
@@ -452,10 +453,12 @@ async function loadChapters() {
       return;
     }
     chaptersSection?.classList.remove("hidden");
+    const chapterButtons = [];
     for (const chapter of items) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "video-chapter-button";
+      button.dataset.startSeconds = String(chapter.start_seconds);
       const time = document.createElement("span");
       time.className = "video-chapter-time";
       time.textContent = formatChapterTime(chapter.start_seconds);
@@ -471,7 +474,31 @@ async function loadChapters() {
         else player.addEventListener("loadedmetadata", seek, { once: true });
       });
       chaptersList.append(button);
+      chapterButtons.push({ button, chapter });
     }
+
+    const updateActiveChapter = () => {
+      const currentTime = player.currentTime || 0;
+      let activeIndex = -1;
+      for (let index = 0; index < chapterButtons.length; index += 1) {
+        if (chapterButtons[index].chapter.start_seconds <= currentTime) activeIndex = index;
+        else break;
+      }
+      chapterButtons.forEach(({ button }, index) => {
+        const active = index === activeIndex;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-current", active ? "time" : "false");
+      });
+      if (currentChapterLabel) {
+        currentChapterLabel.textContent = activeIndex >= 0
+          ? "Now playing: " + chapterButtons[activeIndex].chapter.title
+          : "";
+      }
+    };
+    player?.removeEventListener("timeupdate", player._pyytChapterUpdate);
+    player._pyytChapterUpdate = updateActiveChapter;
+    player?.addEventListener("timeupdate", updateActiveChapter);
+    updateActiveChapter();
   } catch {
     chaptersSection?.classList.add("hidden");
   }
