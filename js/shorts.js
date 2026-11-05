@@ -93,12 +93,26 @@ function makeShort(item) {
   queue.dataset.queueTitle = item.title;
   queue.dataset.queueChannel = item.channel_name || "Creator";
 
+  const later = document.createElement("button");
+  later.type = "button";
+  later.className = "short-action";
+  later.textContent = "◷";
+  later.setAttribute("aria-label", "Save Short to Watch Later");
+  later.addEventListener("click", async () => {
+    try {
+      const result = await apiRequest(`/library/watch-later/${encodeURIComponent(item.id)}`, { method: "POST" });
+      status.textContent = result.status === "already_saved" ? "Already in Watch later." : "Saved to Watch later.";
+    } catch (error) {
+      status.textContent = error.message;
+    }
+  });
+
   const watch = document.createElement("a");
   watch.className = "short-action";
   watch.href = `/watch/${encodeURIComponent(item.id)}`;
   watch.textContent = "▶";
   watch.setAttribute("aria-label", "Open watch page");
-  actions.append(like, share, queue, watch);
+  actions.append(like, share, queue, later, watch);
   overlay.append(details, actions);
   frame.append(video, overlay);
 
