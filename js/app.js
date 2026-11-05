@@ -88,17 +88,7 @@ function renderVideos(items, emptyMessage = "No videos found.") {
     watchLaterButton.type = "button";
     watchLaterButton.className = "queue-add-button";
     watchLaterButton.textContent = "◷ Watch later";
-    watchLaterButton.addEventListener("click", async () => {
-      watchLaterButton.disabled = true;
-      try {
-        const result = await apiRequest(`/library/watch-later/${encodeURIComponent(video.id)}`, { method: "POST" });
-        toast(result.status === "already_saved" ? "Already in Watch later." : "Saved to Watch later.");
-        watchLaterButton.textContent = result.status === "already_saved" ? "✓ Saved" : "✓ Saved";
-      } catch (error) {
-        toast(error.message);
-        watchLaterButton.disabled = false;
-      }
-    });
+    watchLaterButton.dataset.watchLater = video.id;\n    watchLaterButton.setAttribute("aria-label", "Save video to Watch Later");
     const cardActions = document.createElement("div");
     cardActions.className = "video-card-actions";
     cardActions.append(queueButton, watchLaterButton);
