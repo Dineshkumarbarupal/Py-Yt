@@ -363,7 +363,7 @@ function createVideoCard(video) {
       const result = await apiRequest("/videos/" + encodeURIComponent(video.id) + "/chapters");
       chapterInput.value = (result.items || [])
         .map((item) => `${formatChapterTime(item.start_seconds)} | ${item.title}`)
-        .join("\\n");
+        .join("\n");
     } catch (error) {
       chapterStatus.textContent = error.message;
     }
@@ -374,7 +374,7 @@ function createVideoCard(video) {
   });
   chapterForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const lines = chapterInput.value.split(/\\r?\\n/).map((line) => line.trim()).filter(Boolean);
+    const lines = chapterInput.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
     const items = [];
     for (const line of lines) {
       const separator = line.indexOf("|");
