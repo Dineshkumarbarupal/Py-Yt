@@ -84,6 +84,7 @@ def test_creator_studio_dashboard_and_comment_moderation(client, monkeypatch):
     assert hidden.json()["status"] == "hidden"
 
     import api.v1.endpoints.videos as videos_module
+    monkeypatch.setattr(videos_module.settings, "media_thumbnail_bucket", "pyyt-thumbnails")
     deleted_objects = []
     monkeypatch.setattr(videos_module, "delete_object", lambda object_key, bucket_name=None: deleted_objects.append((object_key, bucket_name)))
 
