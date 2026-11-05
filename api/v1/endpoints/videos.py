@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import desc, or_, select
 from sqlalchemy.orm import Session
+from config.settings import settings
 from db.models import Channel, Subscription, Video, User
 from services.notifications import notify
 from db.session import get_db
@@ -118,12 +119,14 @@ def delete_video(
         raise HTTPException(status_code=404, detail="Video not found.")
     if video.status == "deleted":
         return Response(status_code=204)
-    storage_keys = list(dict.fromkeys(
-        key for key in (video.storage_key, video.thumbnail_storage_key) if key
-    ))
-    for object_key in storage_keys:
+    storage_objects = []
+    if video.storage_key:
+        storage_objects.append((video.storage_key, None))
+    if video.thumbnail_storage_key:
+        storage_objects.append((video.thumbnail_storage_key, settings.media_thumbnail_bucket))
+    for object_key, bucket_name in storage_objects:
         try:
-            delete_object(object_key)
+            delete_object(object_key, bucket_name=bucket_name)
         except MediaStorageNotConfigured as exc:
             raise HTTPException(status_code=503, detail=str(exc))
         except (BotoCoreError, ClientError):
