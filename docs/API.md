@@ -44,7 +44,7 @@ OpenAPI documentation is available at /docs in non-production environments.
 | GET | /api/v1/subscriptions | List subscriptions |
 | GET | /api/v1/subscriptions/feed | Latest public videos from subscribed channels |
 | POST/DELETE | /api/v1/subscriptions/{channel_id} | Subscribe/unsubscribe |
-| GET | /api/v1/comments/video/{video_id} | List public video comments |
+| GET | /api/v1/comments/video/{video_id} | List public video comments (sort=newest or oldest) |
 | POST | /api/v1/comments | Create comment/reply |
 | PATCH/DELETE | /api/v1/comments/{comment_id} | Edit or soft-delete your own comment |
 | GET | /api/v1/engagement/videos/{video_id}/reaction | Like/dislike totals and current viewer reaction |
