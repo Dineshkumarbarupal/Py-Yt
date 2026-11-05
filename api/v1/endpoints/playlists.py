@@ -21,6 +21,9 @@ class PlaylistUpdate(BaseModel):
 class PlaylistItemCreate(BaseModel):
     video_id: str
 
+class PlaylistReorder(BaseModel):
+    video_ids: list[str] = Field(min_length=1, max_length=200)
+
 @router.get("/mine")
 def my_playlists(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     items = db.scalars(
@@ -125,6 +128,31 @@ def add_item(playlist_id: str, payload: PlaylistItemCreate, db: Session = Depend
     db.add(PlaylistItem(playlist_id=playlist_id, video_id=video.id, position=next_position))
     db.commit()
     return {"status": "added", "playlist_id": playlist_id, "video_id": video.id, "position": next_position}
+
+
+@router.put("/{playlist_id}/items/order")
+def reorder_items(
+    playlist_id: str,
+    payload: PlaylistReorder,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    playlist = db.get(Playlist, playlist_id)
+    if not playlist or playlist.owner_id != user.id:
+        raise HTTPException(status_code=404, detail="Playlist not found.")
+    if len(payload.video_ids) != len(set(payload.video_ids)):
+        raise HTTPException(status_code=422, detail="A video can only appear once in the playlist order.")
+    items = db.scalars(
+        select(PlaylistItem).where(PlaylistItem.playlist_id == playlist_id)
+    ).all()
+    existing_ids = {item.video_id for item in items}
+    if set(payload.video_ids) != existing_ids:
+        raise HTTPException(status_code=422, detail="The order must include every playlist video exactly once.")
+    by_video_id = {item.video_id: item for item in items}
+    for position, video_id in enumerate(payload.video_ids):
+        by_video_id[video_id].position = position
+    db.commit()
+    return {"playlist_id": playlist_id, "video_ids": payload.video_ids}
 
 @router.delete("/{playlist_id}/items/{video_id}", status_code=204)
 def remove_item(
