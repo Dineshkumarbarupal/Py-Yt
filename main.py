@@ -40,10 +40,10 @@ app.mount("/assets", StaticFiles(directory="asset"), name="assets")
 app.mount("/css", StaticFiles(directory="css"), name="css")
 app.mount("/js", StaticFiles(directory="js"), name="js")
 
-app.include_router(api_router, prefix="/api/v1")
-app.include_router(page_router)
-
-
 @app.get("/health", tags=["health"])
 async def health():
     return {"status": "ok", "service": settings.app_name}
+
+
+app.include_router(api_router, prefix="/api/v1")
+app.include_router(page_router)
