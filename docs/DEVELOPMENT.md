@@ -18,6 +18,18 @@
 8. Start the app: uvicorn main:app --reload.
 9. Open http://127.0.0.1:8000; API docs are at /docs outside production.
 
+## Repository structure
+
+- `main.py` bootstraps the FastAPI app.
+- `webapp/pages.py` owns HTML page routing.
+- `api/v1/endpoints/` contains domain-specific REST routers.
+- `services/` contains reusable application services.
+- `db/` and `migrations/` contain the MySQL models and Alembic migration history.
+- `template/`, `component/`, `css/` and `js/` contain the modular web UI.
+
+For a Python syntax check run:
+`python -m compileall -q main.py api core config db middleware migrations services scripts webapp`
+
 ## Environment
 For local Python execution, the database host is usually 127.0.0.1. In Docker Compose, the host is the service name mysql; compose sets that URL for the app container.
 
