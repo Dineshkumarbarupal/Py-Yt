@@ -14,10 +14,11 @@ def test_upload_verify_publish_and_playback(client, monkeypatch):
     import api.v1.endpoints.videos as videos_module
 
     monkeypatch.setattr(uploads_module.settings, "media_public_base_url", "https://media.example.test")
+    monkeypatch.setattr(uploads_module.settings, "media_thumbnail_bucket", "pyyt-thumbnails")
     monkeypatch.setattr(
         uploads_module,
         "create_upload_url",
-        lambda object_key, content_type: "https://storage.example.test/presigned-upload",
+        lambda object_key, content_type, bucket_name=None: "https://storage.example.test/presigned-upload",
     )
     def inspect_video_object(object_key):
         return {"ContentLength": 2048, "ContentType": "video/mp4"}
@@ -26,7 +27,7 @@ def test_upload_verify_publish_and_playback(client, monkeypatch):
     monkeypatch.setattr(
         uploads_module,
         "inspect_uploaded_image",
-        lambda object_key: {
+        lambda object_key, bucket_name=None: {
             "ContentLength": 4096,
             "ContentType": "image/webp",
             "Signature": b"RIFFxxxxWEBPVP8 ",
@@ -170,14 +171,14 @@ def test_thumbnail_complete_rejects_invalid_image_signature_and_cleans_object(cl
         },
     )
     deleted = []
-    monkeypatch.setattr(uploads_module, "delete_object", lambda object_key: deleted.append(object_key))
+    monkeypatch.setattr(uploads_module, "delete_object", lambda object_key, bucket_name=None: deleted.append((object_key, bucket_name)))
 
     response = client.post(
         f"/api/v1/uploads/{video_id}/thumbnail/complete",
         headers={"X-CSRF-Token": csrf},
     )
     assert response.status_code == 422
-    assert deleted == [f"thumbnails/{channel.id}/{video_id}/cover"]
+    assert deleted == [(f"thumbnails/{channel.id}/{video_id}/cover", "pyyt-thumbnails")]
 
     with SessionLocal() as db:
         saved_video = db.get(Video, video_id)
