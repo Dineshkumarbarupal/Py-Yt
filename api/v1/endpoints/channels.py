@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
-from db.models import Channel, User
+from db.models import Channel, Subscription, User, Video
 from db.session import get_db
 from core.dependencies import get_current_user
 
@@ -35,4 +35,21 @@ def public_channel(handle: str, db: Session = Depends(get_db)):
     channel = db.scalar(select(Channel).where(Channel.handle == handle))
     if not channel:
         raise HTTPException(status_code=404, detail="Channel not found.")
-    return {"id": channel.id, "handle": channel.handle, "name": channel.name, "description": channel.description}
+    subscriber_count = db.scalar(
+        select(func.count(Subscription.id)).where(Subscription.channel_id == channel.id)
+    ) or 0
+    video_count = db.scalar(
+        select(func.count(Video.id)).where(
+            Video.channel_id == channel.id,
+            Video.status == "published",
+            Video.visibility == "public",
+        )
+    ) or 0
+    return {
+        "id": channel.id,
+        "handle": channel.handle,
+        "name": channel.name,
+        "description": channel.description,
+        "subscriber_count": subscriber_count,
+        "video_count": video_count,
+    }
