@@ -92,6 +92,42 @@ def test_watch_later_and_liked_library(client):
     assert liked_list.status_code == 200
     assert [item["id"] for item in liked_list.json()["items"]] == [video_id]
 
+    unliked = viewer_client.delete(
+        f"/api/v1/engagement/videos/{video_id}/reaction",
+        headers={"X-CSRF-Token": viewer_client.cookies.get("pyyt_csrf")},
+    )
+    assert unliked.status_code == 204
+    assert viewer_client.get("/api/v1/library/liked").json()["items"] == []
+
+    progress = viewer_client.post(
+        f"/api/v1/engagement/videos/{video_id}/history",
+        json={"progress_seconds": 75},
+        headers={"X-CSRF-Token": viewer_client.cookies.get("pyyt_csrf")},
+    )
+    assert progress.status_code == 200
+    history = viewer_client.get("/api/v1/library/history")
+    assert history.status_code == 200
+    assert history.json()["items"][0]["progress_seconds"] == 75
+
+    removed_history = viewer_client.delete(
+        f"/api/v1/engagement/history/{video_id}",
+        headers={"X-CSRF-Token": viewer_client.cookies.get("pyyt_csrf")},
+    )
+    assert removed_history.status_code == 204
+    assert viewer_client.get("/api/v1/library/history").json()["items"] == []
+
+    viewer_client.post(
+        f"/api/v1/engagement/videos/{video_id}/history",
+        json={"progress_seconds": 45},
+        headers={"X-CSRF-Token": viewer_client.cookies.get("pyyt_csrf")},
+    )
+    cleared_history = viewer_client.delete(
+        "/api/v1/engagement/history",
+        headers={"X-CSRF-Token": viewer_client.cookies.get("pyyt_csrf")},
+    )
+    assert cleared_history.status_code == 204
+    assert viewer_client.get("/api/v1/library/history").json()["items"] == []
+
     removed = viewer_client.delete(
         f"/api/v1/library/watch-later/{video_id}",
         headers={"X-CSRF-Token": viewer_client.cookies.get("pyyt_csrf")},
