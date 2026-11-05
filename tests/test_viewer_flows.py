@@ -138,6 +138,7 @@ def test_watch_later_and_liked_library(client):
 def test_playlist_create_and_visibility(client):
     owner = register(client, "playlist-owner@example.com", "Playlist Owner")
     video_id, _ = create_public_video(owner)
+    second_video_id, _ = create_public_video(owner, "short")
     csrf = client.cookies.get("pyyt_csrf")
 
     created = client.post(
@@ -154,11 +155,33 @@ def test_playlist_create_and_visibility(client):
         headers={"X-CSRF-Token": csrf},
     )
     assert added.status_code == 201
+    second_added = client.post(
+        f"/api/v1/playlists/{playlist_id}/items",
+        json={"video_id": second_video_id},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert second_added.status_code == 201
 
     detail = client.get(f"/api/v1/playlists/{playlist_id}")
     assert detail.status_code == 200
-    assert detail.json()["items"][0]["video_id"] == video_id
+    assert [item["video_id"] for item in detail.json()["items"]] == [video_id, second_video_id]
     assert detail.json()["is_owner"] is True
+
+    reordered = client.put(
+        f"/api/v1/playlists/{playlist_id}/items/order",
+        json={"video_ids": [second_video_id, video_id]},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert reordered.status_code == 200
+    reordered_detail = client.get(f"/api/v1/playlists/{playlist_id}")
+    assert [item["video_id"] for item in reordered_detail.json()["items"]] == [second_video_id, video_id]
+
+    invalid_order = client.put(
+        f"/api/v1/playlists/{playlist_id}/items/order",
+        json={"video_ids": [video_id]},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert invalid_order.status_code == 422
 
     updated = client.patch(
         f"/api/v1/playlists/{playlist_id}",
@@ -173,6 +196,11 @@ def test_playlist_create_and_visibility(client):
         headers={"X-CSRF-Token": csrf},
     )
     assert removed.status_code == 204
+    removed_second = client.delete(
+        f"/api/v1/playlists/{playlist_id}/items/{second_video_id}",
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert removed_second.status_code == 204
 
     empty_detail = client.get(f"/api/v1/playlists/{playlist_id}")
     assert empty_detail.status_code == 200
