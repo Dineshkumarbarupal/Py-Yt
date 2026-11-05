@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -16,6 +18,8 @@ ALLOWED_VIDEO_TYPES = {
     "video/webm": "webm",
     "video/quicktime": "mov",
 }
+ALLOWED_THUMBNAIL_TYPES = {"image/jpeg", "image/png", "image/webp"}
+THUMBNAIL_MAX_BYTES = 5 * 1024 * 1024
 
 class UploadRequest(BaseModel):
     title: str = Field(min_length=1, max_length=200)
@@ -70,6 +74,101 @@ def presign_upload(payload: UploadRequest, db: Session = Depends(get_db), user: 
         "expires_in": 900,
         "max_file_size_bytes": settings.upload_max_bytes,
     }
+
+
+class ThumbnailUploadRequest(BaseModel):
+    content_type: str
+    file_size_bytes: int = Field(gt=0)
+
+
+@router.post("/{video_id}/thumbnail/presign", status_code=201)
+def presign_thumbnail_upload(
+    video_id: str,
+    payload: ThumbnailUploadRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if payload.content_type not in ALLOWED_THUMBNAIL_TYPES:
+        raise HTTPException(status_code=415, detail="Thumbnail must be JPEG, PNG or WebP.")
+    if payload.file_size_bytes > THUMBNAIL_MAX_BYTES:
+        raise HTTPException(status_code=413, detail="Thumbnail must be 5 MB or smaller.")
+    if not settings.media_public_base_url:
+        raise HTTPException(status_code=503, detail="Configure MEDIA_PUBLIC_BASE_URL before uploading custom thumbnails.")
+
+    channel = db.scalar(select(Channel).where(Channel.owner_id == user.id))
+    video = db.get(Video, video_id)
+    if not video or not channel or video.channel_id != channel.id:
+        raise HTTPException(status_code=404, detail="Video not found.")
+    if video.status not in {"ready", "published"}:
+        raise HTTPException(status_code=409, detail="Complete the video upload before adding a thumbnail.")
+
+    object_key = f"thumbnails/{channel.id}/{video.id}/cover"
+    try:
+        upload_url = create_upload_url(object_key, payload.content_type)
+    except MediaStorageNotConfigured as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except (BotoCoreError, ClientError):
+        raise HTTPException(status_code=502, detail="Could not prepare the thumbnail upload.")
+
+    return {
+        "video_id": video.id,
+        "upload_url": upload_url,
+        "method": "PUT",
+        "headers": {"Content-Type": payload.content_type},
+        "expires_in": 900,
+        "max_file_size_bytes": THUMBNAIL_MAX_BYTES,
+    }
+
+
+@router.post("/{video_id}/thumbnail/complete")
+def complete_thumbnail_upload(
+    video_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    channel = db.scalar(select(Channel).where(Channel.owner_id == user.id))
+    video = db.get(Video, video_id)
+    if not video or not channel or video.channel_id != channel.id:
+        raise HTTPException(status_code=404, detail="Video not found.")
+    if video.status not in {"ready", "published"}:
+        raise HTTPException(status_code=409, detail="Complete the video upload before adding a thumbnail.")
+    if not settings.media_public_base_url:
+        raise HTTPException(status_code=503, detail="Configure MEDIA_PUBLIC_BASE_URL before publishing thumbnails.")
+
+    object_key = f"thumbnails/{channel.id}/{video.id}/cover"
+    try:
+        metadata = inspect_uploaded_object(object_key)
+    except MediaStorageNotConfigured as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except (BotoCoreError, ClientError):
+        raise HTTPException(status_code=409, detail="Thumbnail object was not found. Retry the upload.")
+
+    content_type = metadata.get("ContentType")
+    content_length = metadata.get("ContentLength")
+    if (
+        content_type not in ALLOWED_THUMBNAIL_TYPES
+        or not isinstance(content_length, int)
+        or content_length <= 0
+        or content_length > THUMBNAIL_MAX_BYTES
+    ):
+        try:
+            delete_object(object_key)
+        except (MediaStorageNotConfigured, BotoCoreError, ClientError):
+            raise HTTPException(status_code=502, detail="Thumbnail validation failed and the object could not be cleaned up.")
+        raise HTTPException(status_code=422, detail="Uploaded thumbnail must be a valid JPEG, PNG or WebP image up to 5 MB.")
+
+    public_base = settings.media_public_base_url.rstrip("/")
+    public_url = f"{public_base}/{quote(object_key, safe='/')}?v={new_id().replace('-', '')}"
+    video.thumbnail_storage_key = object_key
+    video.thumbnail_url = public_url
+    db.commit()
+    return {
+        "video_id": video.id,
+        "thumbnail_url": video.thumbnail_url,
+        "content_type": content_type,
+        "file_size_bytes": content_length,
+    }
+
 
 @router.post("/{video_id}/complete")
 def complete_upload(video_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
