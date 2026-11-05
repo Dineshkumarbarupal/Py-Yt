@@ -52,6 +52,7 @@ class Video(Base):
     source_type: Mapped[str] = mapped_column(String(20), nullable=False, default="upload")
     source_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     thumbnail_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    thumbnail_storage_key: Mapped[str | None] = mapped_column(String(700), nullable=True)
     duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
     visibility: Mapped[str] = mapped_column(String(20), nullable=False, default="private")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft")
