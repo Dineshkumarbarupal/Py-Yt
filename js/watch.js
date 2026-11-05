@@ -428,6 +428,55 @@ reportForm?.addEventListener("submit", async (event) => {
 });
 
 
+
+const chaptersSection = document.querySelector("#video-chapters");
+const chaptersList = document.querySelector("#video-chapter-list");
+
+function formatChapterTime(value) {
+  const seconds = Math.max(0, Number(value) || 0);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remaining = seconds % 60;
+  const pad = (part) => String(part).padStart(2, "0");
+  return hours ? `${pad(hours)}:${pad(minutes)}:${pad(remaining)}` : `${pad(minutes)}:${pad(remaining)}`;
+}
+
+async function loadChapters() {
+  if (!chaptersList || !videoId) return;
+  try {
+    const result = await apiRequest("/videos/" + encodeURIComponent(videoId) + "/chapters");
+    const items = result.items || [];
+    chaptersList.replaceChildren();
+    if (!items.length) {
+      chaptersSection?.classList.add("hidden");
+      return;
+    }
+    chaptersSection?.classList.remove("hidden");
+    for (const chapter of items) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "video-chapter-button";
+      const time = document.createElement("span");
+      time.className = "video-chapter-time";
+      time.textContent = formatChapterTime(chapter.start_seconds);
+      const title = document.createElement("span");
+      title.textContent = chapter.title;
+      button.append(time, title);
+      button.addEventListener("click", () => {
+        const seek = () => {
+          player.currentTime = chapter.start_seconds;
+          player.play().catch(() => null);
+        };
+        if (player.readyState >= 1) seek();
+        else player.addEventListener("loadedmetadata", seek, { once: true });
+      });
+      chaptersList.append(button);
+    }
+  } catch {
+    chaptersSection?.classList.add("hidden");
+  }
+}
+
 async function loadCaptionTracks() {
   if (!player || !videoId) return;
   try {
@@ -452,3 +501,4 @@ initializePlayer();
 loadComments();
 loadUpNext();
 loadCaptionTracks();
+loadChapters();
