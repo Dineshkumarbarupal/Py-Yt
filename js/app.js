@@ -84,7 +84,25 @@ function renderVideos(items, emptyMessage = "No videos found.") {
     queueButton.dataset.queueId = video.id;
     queueButton.dataset.queueTitle = video.title;
     queueButton.dataset.queueChannel = video.channel_name || "Creator";
-    card.append(thumbLink, meta, queueButton);
+    const watchLaterButton = document.createElement("button");
+    watchLaterButton.type = "button";
+    watchLaterButton.className = "queue-add-button";
+    watchLaterButton.textContent = "◷ Watch later";
+    watchLaterButton.addEventListener("click", async () => {
+      watchLaterButton.disabled = true;
+      try {
+        const result = await apiRequest(`/library/watch-later/${encodeURIComponent(video.id)}`, { method: "POST" });
+        toast(result.status === "already_saved" ? "Already in Watch later." : "Saved to Watch later.");
+        watchLaterButton.textContent = result.status === "already_saved" ? "✓ Saved" : "✓ Saved";
+      } catch (error) {
+        toast(error.message);
+        watchLaterButton.disabled = false;
+      }
+    });
+    const cardActions = document.createElement("div");
+    cardActions.className = "video-card-actions";
+    cardActions.append(queueButton, watchLaterButton);
+    card.append(thumbLink, meta, cardActions);
     grid.append(card);
   }
   feed?.append(grid);
