@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 from db.models import Channel, Comment, User, Video
 from services.notifications import notify
@@ -20,6 +20,7 @@ class CommentUpdate(BaseModel):
 @router.get("/video/{video_id}")
 def list_comments(
     video_id: str,
+    sort: str = Query(default="newest", pattern="^(newest|oldest)$"),
     db: Session = Depends(get_db),
     viewer: User | None = Depends(get_optional_user),
 ):
@@ -30,7 +31,7 @@ def list_comments(
         select(Comment, User)
         .join(User, Comment.user_id == User.id)
         .where(Comment.video_id == video_id, Comment.status == "visible")
-        .order_by(Comment.created_at.desc())
+        .order_by(desc(Comment.created_at) if sort == "newest" else Comment.created_at.asc())
         .limit(100)
     ).all()
     return {
