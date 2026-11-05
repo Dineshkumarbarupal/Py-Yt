@@ -82,6 +82,30 @@ def save_watch_progress(video_id: str, payload: WatchProgressInput, db: Session 
     db.commit()
     return {"status": "saved"}
 
+
+@router.delete("/history", status_code=204)
+def clear_watch_history(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    db.query(WatchHistory).filter(WatchHistory.user_id == user.id).delete(synchronize_session=False)
+    db.commit()
+    return None
+
+@router.delete("/history/{video_id}", status_code=204)
+def remove_history_item(
+    video_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    row = db.scalar(
+        select(WatchHistory).where(
+            WatchHistory.user_id == user.id,
+            WatchHistory.video_id == video_id,
+        )
+    )
+    if row:
+        db.delete(row)
+        db.commit()
+    return None
+
 @router.get("/history")
 def watch_history(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     rows = db.execute(
