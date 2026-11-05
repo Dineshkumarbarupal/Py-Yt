@@ -22,7 +22,9 @@ OpenAPI documentation is available at /docs in non-production environments.
 | POST | /api/v1/videos/{video_id}/publish | Publish verified upload |
 | POST | /api/v1/videos/{video_id}/view | Increment public view counter |
 | POST | /api/v1/uploads/presign | Create constrained direct-upload URL |
-| POST | /api/v1/uploads/{video_id}/complete | Verify uploaded object |
+| POST | /api/v1/uploads/{video_id}/complete | Verify uploaded video object |
+| POST | /api/v1/uploads/{video_id}/thumbnail/presign | Create owner-only signed image upload URL |
+| POST | /api/v1/uploads/{video_id}/thumbnail/complete | Verify image signature and publish custom thumbnail URL |
 | GET | /api/v1/discovery/feed | Latest public feed with category filter |
 | GET | /api/v1/discovery/suggest | Public video/channel autocomplete suggestions |
 | GET | /api/v1/discovery/search | Search local catalog |
