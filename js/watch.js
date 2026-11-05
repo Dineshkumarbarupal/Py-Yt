@@ -7,6 +7,7 @@ const playerStatus = document.querySelector("#player-status");
 const commentForm = document.querySelector("#comment-form");
 const commentStatus = document.querySelector("#comment-status");
 const commentsList = document.querySelector("#comments-list");
+const commentSort = document.querySelector("#comment-sort");
 const playlistDialog = document.querySelector("#playlist-dialog");
 const playlistForm = document.querySelector("#playlist-form");
 const playlistSelect = document.querySelector("#playlist-select");
@@ -170,7 +171,7 @@ loadReactionSummary().catch(() => null);
 async function loadComments() {
   if (!commentsList) return;
   try {
-    const result = await apiRequest(`/comments/video/${encodeURIComponent(videoId)}`);
+    const result = await apiRequest(`/comments/video/${encodeURIComponent(videoId)}?sort=${encodeURIComponent(commentSort?.value || "newest")}`);
     commentsList.replaceChildren();
     const items = result.items || [];
     if (!items.length) {
@@ -359,6 +360,8 @@ async function loadComments() {
     commentsList.textContent = error.message;
   }
 }
+
+commentSort?.addEventListener("change", loadComments);
 
 commentForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
