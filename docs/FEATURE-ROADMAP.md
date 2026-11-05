@@ -13,11 +13,12 @@ Py-Yt is an independent video platform inspired by YouTube's product categories.
 | Registration, login, logout, current account, profile editing and password change | Implemented in code |
 | Public creator channel page | Implemented in code |
 | Subscribe/unsubscribe, subscriptions list and latest-from-subscriptions feed | Implemented in code |
-| Playlists: create, list, view, add/remove videos, edit and delete | Implemented in code |
+| Playlists: create, list, view, add/remove videos, reorder, edit and delete | Implemented in code |
 | Comments and threaded reply storage | Basic create/list API and comment UI |
 | Like/dislike reactions and live count/state display | API and watch UI implemented |
 | Watch history and progress | API and personal history page implemented |
-| Watch Later and Liked videos library | API and personal library page implemented |
+| Watch Later and Liked videos library | API/UI support removal and unlike actions |
+| Watch history | API/UI support individual removal and clear-all actions |
 | In-app notifications for new videos, subscribers, comments and replies | Implemented in code with unread/read controls |
 | Playback speed, theater mode, keyboard shortcuts, picture-in-picture, share, like/dislike, autoplay, latest Up next list and session Watch Queue | Implemented in code |
 | Adaptive quality selector, chapters, caption/subtitle tracks and mini-player | Planned |
