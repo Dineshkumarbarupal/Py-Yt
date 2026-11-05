@@ -74,12 +74,13 @@ def test_creator_studio_dashboard_and_comment_moderation(client, monkeypatch):
 
     updated = client.patch(
         f"/api/v1/videos/{video_id}",
-        json={"title": "Updated Studio test", "category": "Technology", "visibility": "unlisted"},
+        json={"title": "Updated Studio test", "category": "Technology", "video_format": "short", "visibility": "unlisted"},
         headers={"X-CSRF-Token": csrf},
     )
     assert updated.status_code == 200
     assert updated.json()["title"] == "Updated Studio test"
     assert updated.json()["visibility"] == "unlisted"
+    assert updated.json()["video_format"] == "short"
 
     deleted = client.delete(
         f"/api/v1/videos/{video_id}",
