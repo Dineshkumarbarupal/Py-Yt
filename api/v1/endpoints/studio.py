@@ -81,6 +81,7 @@ def creator_videos(
                 "description": video.description,
                 "category": video.category,
                 "video_format": video.video_format,
+                "thumbnail_url": video.thumbnail_url,
                 "visibility": video.visibility,
                 "status": video.status,
                 "view_count": video.view_count,
