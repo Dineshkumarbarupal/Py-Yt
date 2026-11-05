@@ -161,10 +161,11 @@ def test_thumbnail_complete_rejects_invalid_image_signature_and_cleans_object(cl
         video_id = video.id
 
     monkeypatch.setattr(uploads_module.settings, "media_public_base_url", "https://media.example.test")
+    monkeypatch.setattr(uploads_module.settings, "media_thumbnail_bucket", "pyyt-thumbnails")
     monkeypatch.setattr(
         uploads_module,
         "inspect_uploaded_image",
-        lambda object_key: {
+        lambda object_key, bucket_name=None: {
             "ContentLength": 256,
             "ContentType": "image/png",
             "Signature": b"this is not a PNG file",
