@@ -189,3 +189,45 @@ def test_thumbnail_complete_rejects_invalid_image_signature_and_cleans_object(cl
         saved_video = db.get(Video, video_id)
         assert saved_video.thumbnail_storage_key is None
         assert saved_video.thumbnail_url is None
+
+
+def test_thumbnail_upload_never_falls_back_to_private_video_bucket(client, monkeypatch):
+    from db.models import Channel, Video
+    from db.session import SessionLocal
+    import api.v1.endpoints.uploads as uploads_module
+
+    registration = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "thumbnail-bucket-check@example.com",
+            "display_name": "Bucket Check",
+            "password": "A-very-strong-test-password-22",
+        },
+    )
+    assert registration.status_code == 201
+    owner_id = registration.json()["id"]
+    csrf = client.cookies.get("pyyt_csrf")
+
+    with SessionLocal() as db:
+        channel = db.query(Channel).filter(Channel.owner_id == owner_id).one()
+        video = Video(
+            channel_id=channel.id,
+            title="Private bucket safety",
+            description="",
+            category="General",
+            source_type="upload",
+            visibility="private",
+            status="ready",
+        )
+        db.add(video)
+        db.commit()
+        video_id = video.id
+
+    monkeypatch.setattr(uploads_module.settings, "media_thumbnail_bucket", None)
+    monkeypatch.setattr(uploads_module.settings, "media_public_base_url", "https://media.example.test")
+    response = client.post(
+        f"/api/v1/uploads/{video_id}/thumbnail/presign",
+        json={"content_type": "image/jpeg", "file_size_bytes": 1024},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 503
