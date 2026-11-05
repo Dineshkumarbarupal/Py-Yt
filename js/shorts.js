@@ -17,6 +17,23 @@ function makeShort(item) {
   video.loop = true;
   video.preload = "none";
   video.setAttribute("aria-label", item.title);
+  let viewRecorded = false;
+  let lastProgressSaved = -1;
+
+  video.addEventListener("play", () => {
+    if (viewRecorded) return;
+    viewRecorded = true;
+    apiRequest("/videos/" + encodeURIComponent(item.id) + "/view", { method: "POST" }).catch(() => null);
+  });
+  video.addEventListener("timeupdate", () => {
+    const second = Math.floor(video.currentTime);
+    if (second - lastProgressSaved < 15) return;
+    lastProgressSaved = second;
+    apiRequest("/engagement/videos/" + encodeURIComponent(item.id) + "/history", {
+      method: "POST",
+      body: JSON.stringify({ progress_seconds: second }),
+    }).catch(() => null);
+  });
 
   const overlay = document.createElement("div");
   overlay.className = "short-overlay";
