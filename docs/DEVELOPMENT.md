@@ -46,6 +46,8 @@ Run pytest -q. The test suite uses a test database URL if DATABASE_URL is not su
 5. Run docker compose ps and verify the mysql, migrate, app and nginx services are healthy/completed as expected.
 6. Open http://localhost through Nginx.
 
+For local use, APP_ENV=development allows the example DEBUG and local cookie settings. Do not carry those settings into production; production startup validates its required secrets, MySQL connection, secure cookies, allowed origin and object-storage credentials.
+
 For schema changes, the migration service runs on the next compose up. To inspect logs use docker compose logs -f app migrate; to stop the stack use docker compose down. Persistent MySQL data remains in the named mysql_data volume.
 
 Never use example credentials in an internet-accessible deployment.
