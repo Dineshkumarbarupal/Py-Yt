@@ -213,8 +213,87 @@ async function loadComments() {
       header.append(author, replyButton, reportButton);
 
       const body = document.createElement("p");
+      body.className = "comment-body";
       body.textContent = comment.body;
       article.append(header, body);
+
+      if (comment.can_manage) {
+        const ownerActions = document.createElement("div");
+        ownerActions.className = "comment-owner-actions";
+        const editButton = document.createElement("button");
+        editButton.type = "button";
+        editButton.className = "comment-reply-button";
+        editButton.textContent = "Edit";
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "comment-reply-button";
+        deleteButton.textContent = "Delete";
+
+        const editForm = document.createElement("form");
+        editForm.className = "comment-edit-form hidden";
+        const editInput = document.createElement("textarea");
+        editInput.name = "body";
+        editInput.rows = 3;
+        editInput.maxLength = 5000;
+        editInput.required = true;
+        editInput.value = comment.body;
+        const editActions = document.createElement("div");
+        editActions.className = "comment-edit-actions";
+        const saveEdit = document.createElement("button");
+        saveEdit.type = "submit";
+        saveEdit.className = "secondary-button";
+        saveEdit.textContent = "Save";
+        const cancelEdit = document.createElement("button");
+        cancelEdit.type = "button";
+        cancelEdit.className = "secondary-button";
+        cancelEdit.textContent = "Cancel";
+        const editStatus = document.createElement("span");
+        editStatus.className = "muted";
+        editStatus.setAttribute("role", "status");
+        editActions.append(saveEdit, cancelEdit);
+        editForm.append(editInput, editActions, editStatus);
+
+        editButton.addEventListener("click", () => {
+          editForm.classList.toggle("hidden");
+          editInput.focus();
+        });
+        cancelEdit.addEventListener("click", () => {
+          editInput.value = comment.body;
+          editForm.classList.add("hidden");
+          editStatus.textContent = "";
+        });
+        editForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const nextBody = editInput.value.trim();
+          if (!nextBody) return;
+          saveEdit.disabled = true;
+          editStatus.textContent = "Saving…";
+          try {
+            await apiRequest(`/comments/${encodeURIComponent(comment.id)}`, {
+              method: "PATCH",
+              body: JSON.stringify({ body: nextBody }),
+            });
+            await loadComments();
+          } catch (error) {
+            editStatus.textContent = error.message;
+          } finally {
+            saveEdit.disabled = false;
+          }
+        });
+        deleteButton.addEventListener("click", async () => {
+          if (!window.confirm("Delete your comment?")) return;
+          deleteButton.disabled = true;
+          try {
+            await apiRequest(`/comments/${encodeURIComponent(comment.id)}`, { method: "DELETE" });
+            await loadComments();
+          } catch (error) {
+            toast(error.message);
+            deleteButton.disabled = false;
+          }
+        });
+        ownerActions.append(editButton, deleteButton);
+        article.append(ownerActions, editForm);
+      }
 
       const replyContainer = document.createElement("div");
       replyContainer.className = "comment-replies";
