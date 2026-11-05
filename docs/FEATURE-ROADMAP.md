@@ -43,7 +43,8 @@ Py-Yt is an independent video platform inspired by YouTube's product categories.
 | Direct-to-object-storage upload using presigned PUT | Implemented in code; bucket setup and E2E test pending |
 | Upload metadata verification and publish lifecycle | Implemented in code; security checks still need expansion |
 | Video title/category/visibility editing and owner-only deletion | Basic API and Studio UI implemented |
-| Custom thumbnails, scheduled publishing, captions, chapters, end screens/cards | Planned |
+| Custom thumbnails: direct signed image upload, JPEG/PNG/WebP signature verification and Creator Studio replacement | Basic implementation in code; MEDIA_PUBLIC_BASE_URL required |
+| Scheduled publishing, captions, chapters, end screens/cards | Planned |
 | Basic creator analytics: total view counters and top videos | Implemented in code |
 | Advanced retention, traffic sources and audience analytics | Planned |
 | Creator hide/restore comment controls | Basic API and UI implemented |
