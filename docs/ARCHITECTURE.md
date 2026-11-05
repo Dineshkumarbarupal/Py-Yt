@@ -4,7 +4,17 @@
 
 Py-Yt starts as a modular monolith. A single FastAPI deployment exposes versioned REST APIs, but code is separated by domain. This avoids premature microservices while keeping extraction boundaries clear.
 
-### Domain modules
+### Application structure
+
+- `main.py`: FastAPI construction, middleware, health route, static mounts and router registration.
+- `webapp/pages.py`: server-rendered page routes and Jinja template rendering.
+- `api/v1/endpoints/`: versioned REST endpoints grouped by domain.
+- `services/`: reusable application services and cross-endpoint business operations.
+- `db/` and `migrations/`: SQLAlchemy models/sessions/schemas and Alembic schema history.
+- `core/`, `config/`, `middleware/`: security, storage adapters, settings, logging and request protection.
+- `template/`, `component/`, `css/`, `js/`, `asset/`: viewer/creator UI, reusable templates, styles, ES modules and static assets.
+
+## Domain modules
 - Identity: users, credentials, sessions and account status.
 - Channels: channel ownership, public profile and settings.
 - Catalog: video metadata, visibility, lifecycle and category.
