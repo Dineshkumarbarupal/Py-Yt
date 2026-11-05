@@ -1,4 +1,4 @@
-from sqlalchemy import desc, or_, select
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.orm import Session
 from db.models import Channel, Video
 
@@ -72,3 +72,44 @@ def public_shorts(db: Session, limit: int = 20, offset: int = 0) -> list[dict]:
         .limit(limit)
     ).all()
     return [serialize_public_video(video, channel) for video, channel in rows]
+
+
+def search_suggestions(db: Session, query: str, limit: int = 8) -> list[dict]:
+    normalized = query.strip()
+    if len(normalized) < 2:
+        return []
+    pattern = f"%{normalized}%"
+    video_titles = db.scalars(
+        select(Video.title)
+        .where(
+            Video.status == "published",
+            Video.visibility == "public",
+            Video.title.ilike(pattern),
+        )
+        .group_by(Video.title)
+        .order_by(func.max(Video.published_at).desc())
+        .limit(limit)
+    ).all()
+    channel_names = db.scalars(
+        select(Channel.name)
+        .join(Video, Video.channel_id == Channel.id)
+        .where(
+            Video.status == "published",
+            Video.visibility == "public",
+            Channel.name.ilike(pattern),
+        )
+        .group_by(Channel.name)
+        .order_by(func.max(Video.published_at).desc())
+        .limit(limit)
+    ).all()
+    suggestions = [{"label": title, "kind": "video"} for title in video_titles]
+    suggestions.extend({"label": name, "kind": "channel"} for name in channel_names)
+    seen = set()
+    unique = []
+    for item in suggestions:
+        key = item["label"].casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(item)
+    return unique[:limit]
