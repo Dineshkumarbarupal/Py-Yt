@@ -6,7 +6,9 @@
   <div class="video-meta">
     <div class="channel-avatar">{{ video.channel_initial or "P" }}</div>
     <div class="video-copy"><a class="video-title" href="/watch/{{ video.id }}">{{ video.title }}</a><div class="muted">{{ video.channel_name }} · {{ video.view_label }}</div><div class="muted">{{ video.published_label }}</div></div>
-    <button class="more-button" aria-label="More actions">⋮</button>
+  </div>
+  <div class="video-card-actions">
     <button class="queue-add-button" type="button" data-queue-add data-queue-id="{{ video.id }}" data-queue-title="{{ video.title }}" data-queue-channel="{{ video.channel_name }}">＋ Queue</button>
+    <button class="queue-add-button" type="button" data-watch-later="{{ video.id }}" aria-label="Save video to Watch Later">◷ Watch later</button>
   </div>
 </article>
