@@ -18,7 +18,7 @@ The original repository was empty. A modular FastAPI/MySQL web foundation has no
 - Creator Studio overview, creator-owned content list, title/category/format/visibility filters, pagination, custom thumbnail upload/edit and comment hide/restore workflows.
 - In-app notifications for new public uploads, new subscribers, comments and comment replies, with unread counters and mark-read actions.
 - UGC safety foundation: user reports for videos/comments and an admin-only review queue with dismiss or remove-content actions.
-- Presigned direct-to-S3-compatible video upload, object metadata verification, verified JPEG/PNG/WebP custom thumbnails and expiring signed playback URLs.
+- Presigned direct-to-S3-compatible video upload, object metadata verification, JPEG/PNG/WebP custom thumbnails stored in a separate public bucket, and expiring signed playback URLs.
 - Dockerfile, Docker Compose, Nginx configuration and GitHub Actions CI workflow.
 - Architecture, feature roadmap, API, security, development and deployment documentation.
 
@@ -29,7 +29,7 @@ FFmpeg-validated Shorts duration and renditions, video transcoding/HLS, live str
 - Frontend: HTML5, CSS3, vanilla JavaScript ES modules
 - Backend: Python + FastAPI
 - Database: MySQL + SQLAlchemy + Alembic
-- Media: S3-compatible object storage (Cloudflare R2 or AWS S3); signed upload/playback URLs
+- Media: private S3-compatible video bucket + separate public thumbnail bucket; signed video upload/playback URLs and CDN thumbnail URLs
 - Deployment: Docker, Nginx, CI; Redis/workers planned for later phases
 
 ## Repository layout
