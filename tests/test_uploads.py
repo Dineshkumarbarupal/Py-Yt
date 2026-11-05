@@ -163,6 +163,7 @@ def test_thumbnail_complete_rejects_invalid_image_signature_and_cleans_object(cl
         db.add(video)
         db.commit()
         video_id = video.id
+        channel_id = channel.id
 
     monkeypatch.setattr(uploads_module.settings, "media_public_base_url", "https://media.example.test")
     monkeypatch.setattr(uploads_module.settings, "media_thumbnail_bucket", "pyyt-thumbnails")
@@ -183,7 +184,7 @@ def test_thumbnail_complete_rejects_invalid_image_signature_and_cleans_object(cl
         headers={"X-CSRF-Token": csrf},
     )
     assert response.status_code == 422
-    assert deleted == [(f"thumbnails/{channel.id}/{video_id}/cover", "pyyt-thumbnails")]
+    assert deleted == [(f"thumbnails/{channel_id}/{video_id}/cover", "pyyt-thumbnails")]
 
     with SessionLocal() as db:
         saved_video = db.get(Video, video_id)
