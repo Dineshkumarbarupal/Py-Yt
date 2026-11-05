@@ -48,7 +48,7 @@ OpenAPI documentation is available at /docs in non-production environments.
 | GET | /api/v1/library/liked | Current user's liked public videos |
 | GET | /api/v1/library/history | Current user's watch history with video metadata |
 | GET | /api/v1/studio/overview | Creator Studio dashboard totals |
-| GET | /api/v1/studio/videos | Creator-owned video catalog |
+| GET | /api/v1/studio/videos | Creator-owned video catalog with title/status/visibility/format filters and pagination |
 | GET | /api/v1/studio/analytics | Basic view totals and top videos |
 | GET | /api/v1/studio/comments | Comments on creator-owned videos |
 | PATCH | /api/v1/studio/comments/{comment_id} | Hide/restore a comment on creator-owned video |
