@@ -100,5 +100,10 @@ def test_creator_studio_dashboard_and_comment_moderation(client, monkeypatch):
     )
     assert deleted.status_code == 204
 
+    default_content = client.get("/api/v1/studio/videos")
+    assert all(item["id"] != video_id for item in default_content.json()["items"])
+    deleted_content = client.get("/api/v1/studio/videos?status=deleted")
+    assert [item["id"] for item in deleted_content.json()["items"]] == [video_id]
+
     unavailable = client.get(f"/api/v1/videos/{video_id}")
     assert unavailable.status_code == 404
