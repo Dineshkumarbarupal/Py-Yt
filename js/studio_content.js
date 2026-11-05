@@ -28,9 +28,74 @@ function selectControl(className, values, current) {
   return select;
 }
 
+const thumbnailTypes = ["image/jpeg", "image/png", "image/webp"];
+const thumbnailMaxBytes = 5 * 1024 * 1024;
+
+async function uploadThumbnail(videoId, file) {
+  if (!thumbnailTypes.includes(file.type)) throw new Error("Thumbnail must be JPEG, PNG or WebP.");
+  if (file.size <= 0 || file.size > thumbnailMaxBytes) throw new Error("Thumbnail must be 5 MB or smaller.");
+  const presign = await apiRequest("/uploads/" + encodeURIComponent(videoId) + "/thumbnail/presign", {
+    method: "POST",
+    body: JSON.stringify({ content_type: file.type, file_size_bytes: file.size }),
+  });
+  const response = await fetch(presign.upload_url, {
+    method: presign.method || "PUT",
+    headers: presign.headers || { "Content-Type": file.type },
+    body: file,
+  });
+  if (!response.ok) throw new Error("Media storage rejected the thumbnail upload.");
+  return apiRequest("/uploads/" + encodeURIComponent(videoId) + "/thumbnail/complete", { method: "POST" });
+}
+
 function createVideoCard(video) {
   const card = document.createElement("article");
   card.className = "studio-content-row";
+  const thumbnailPanel = document.createElement("div");
+  thumbnailPanel.className = "studio-thumbnail-panel";
+  const thumbnailPreview = document.createElement("img");
+  thumbnailPreview.className = "studio-thumbnail-preview";
+  thumbnailPreview.alt = "Custom video thumbnail";
+  thumbnailPreview.loading = "lazy";
+  if (video.thumbnail_url) {
+    thumbnailPreview.src = video.thumbnail_url;
+  } else {
+    thumbnailPreview.classList.add("thumbnail-empty");
+    thumbnailPreview.alt = "No custom thumbnail";
+  }
+  const thumbnailInput = document.createElement("input");
+  thumbnailInput.type = "file";
+  thumbnailInput.accept = "image/jpeg,image/png,image/webp";
+  thumbnailInput.className = "studio-thumbnail-input";
+  thumbnailInput.setAttribute("aria-label", "Choose custom thumbnail");
+  const thumbnailButton = document.createElement("button");
+  thumbnailButton.type = "button";
+  thumbnailButton.className = "secondary-button";
+  thumbnailButton.textContent = video.thumbnail_url ? "Change thumbnail" : "Upload thumbnail";
+  thumbnailButton.addEventListener("click", async () => {
+    const file = thumbnailInput.files?.[0];
+    if (!file) {
+      status.textContent = "Choose a JPEG, PNG or WebP thumbnail first.";
+      return;
+    }
+    thumbnailButton.disabled = true;
+    status.textContent = "Uploading and verifying thumbnail…";
+    try {
+      const result = await uploadThumbnail(video.id, file);
+      video.thumbnail_url = result.thumbnail_url;
+      thumbnailPreview.src = result.thumbnail_url;
+      thumbnailPreview.classList.remove("thumbnail-empty");
+      thumbnailPreview.alt = "Custom video thumbnail";
+      thumbnailButton.textContent = "Change thumbnail";
+      thumbnailInput.value = "";
+      status.textContent = "Custom thumbnail saved.";
+    } catch (error) {
+      status.textContent = error.message;
+    } finally {
+      thumbnailButton.disabled = false;
+    }
+  });
+  thumbnailPanel.append(thumbnailPreview, thumbnailInput, thumbnailButton);
+
   const info = document.createElement("div");
   info.className = "studio-content-info";
   const title = document.createElement("input");
@@ -104,7 +169,7 @@ function createVideoCard(video) {
   });
 
   actions.append(save, remove);
-  card.append(info, category, format, visibility, actions);
+  card.append(thumbnailPanel, info, category, format, visibility, actions);
   return card;
 }
 
