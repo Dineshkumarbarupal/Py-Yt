@@ -105,6 +105,46 @@ function toast(message) {
   window.setTimeout(() => item.remove(), 3000);
 }
 
+
+function linkifyDescriptionTimestamps() {
+  const description = document.querySelector("#video-description");
+  if (!description) return;
+  const source = description.textContent || "";
+  const pattern = /(?<![\\w])(?:(\\d{1,2}):)?([0-5]?\\d):([0-5]\\d)(?![\\w])/g;
+  let cursor = 0;
+  let match;
+  const fragment = document.createDocumentFragment();
+
+  while ((match = pattern.exec(source)) !== null) {
+    if (match.index > cursor) {
+      fragment.append(document.createTextNode(source.slice(cursor, match.index)));
+    }
+    const hours = match[1] ? Number(match[1]) : 0;
+    const minutes = Number(match[2]);
+    const seconds = Number(match[3]);
+    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    const link = document.createElement("a");
+    link.href = `#t=${totalSeconds}`;
+    link.className = "description-timestamp";
+    link.textContent = match[0];
+    link.setAttribute("aria-label", `Seek to ${match[0]}`);
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      const seek = () => {
+        player.currentTime = totalSeconds;
+        player.play().catch(() => null);
+      };
+      if (player.readyState >= 1) seek();
+      else player.addEventListener("loadedmetadata", seek, { once: true });
+    });
+    fragment.append(link);
+    cursor = match.index + match[0].length;
+  }
+
+  if (cursor < source.length) fragment.append(document.createTextNode(source.slice(cursor)));
+  description.replaceChildren(fragment);
+}
+
 async function initializePlayer() {
   if (!videoId || !player) return;
   try {
@@ -609,6 +649,7 @@ async function loadCaptionTracks() {
   }
 }
 
+linkifyDescriptionTimestamps();
 initializePlayer();
 loadComments();
 loadUpNext();
