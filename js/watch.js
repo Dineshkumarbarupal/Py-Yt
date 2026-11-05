@@ -17,6 +17,7 @@ const reportStatus = document.querySelector("#report-status");
 let reportTarget = { type: "video", id: videoId };
 let lastSavedSecond = -1;
 let viewRecorded = false;
+let chapterTimeUpdateHandler = null;
 
 
 const upNextList = document.querySelector("#up-next-list");
@@ -495,9 +496,11 @@ async function loadChapters() {
           : "";
       }
     };
-    player?.removeEventListener("timeupdate", player._pyytChapterUpdate);
-    player._pyytChapterUpdate = updateActiveChapter;
-    player?.addEventListener("timeupdate", updateActiveChapter);
+    if (player && chapterTimeUpdateHandler) {
+      player.removeEventListener("timeupdate", chapterTimeUpdateHandler);
+    }
+    chapterTimeUpdateHandler = updateActiveChapter;
+    player?.addEventListener("timeupdate", chapterTimeUpdateHandler);
     updateActiveChapter();
   } catch {
     chaptersSection?.classList.add("hidden");
