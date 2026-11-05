@@ -31,6 +31,7 @@ OpenAPI documentation is available at /docs in non-production environments.
 | GET/PATCH/DELETE | /api/v1/playlists/{playlist_id} | Read, edit or delete owned playlist |
 | POST | /api/v1/playlists/{playlist_id}/items | Add video to playlist |
 | DELETE | /api/v1/playlists/{playlist_id}/items/{video_id} | Remove video from owned playlist |
+| PUT | /api/v1/playlists/{playlist_id}/items/order | Reorder every item in an owned playlist |
 | GET | /api/v1/subscriptions | List subscriptions |
 | GET | /api/v1/subscriptions/feed | Latest public videos from subscribed channels |
 | POST/DELETE | /api/v1/subscriptions/{channel_id} | Subscribe/unsubscribe |
