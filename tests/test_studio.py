@@ -85,7 +85,7 @@ def test_creator_studio_dashboard_and_comment_moderation(client, monkeypatch):
 
     import api.v1.endpoints.videos as videos_module
     deleted_objects = []
-    monkeypatch.setattr(videos_module, "delete_object", lambda object_key: deleted_objects.append(object_key))
+    monkeypatch.setattr(videos_module, "delete_object", lambda object_key, bucket_name=None: deleted_objects.append((object_key, bucket_name)))
 
     updated = client.patch(
         f"/api/v1/videos/{video_id}",
@@ -102,8 +102,8 @@ def test_creator_studio_dashboard_and_comment_moderation(client, monkeypatch):
         headers={"X-CSRF-Token": csrf},
     )
     assert deleted.status_code == 204
-    assert f"test/{owner['id']}/studio.mp4" in deleted_objects
-    assert f"thumbnails/{owner['id']}/video/cover" in deleted_objects
+    assert (f"test/{owner['id']}/studio.mp4", None) in deleted_objects
+    assert (f"thumbnails/{owner['id']}/video/cover", "pyyt-thumbnails") in deleted_objects
 
     default_content = client.get("/api/v1/studio/videos")
     assert all(item["id"] != video_id for item in default_content.json()["items"])
