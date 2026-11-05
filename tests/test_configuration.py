@@ -14,6 +14,7 @@ def production_settings(**overrides):
         "session_cookie_secure": True,
         "media_storage_driver": "s3",
         "media_bucket": "pyyt-videos",
+        "media_thumbnail_bucket": "pyyt-thumbnails",
         "media_access_key_id": "access-key",
         "media_secret_access_key": "secret-key",
         "media_public_base_url": "https://media.pyyt.example.com",
@@ -42,6 +43,8 @@ def test_valid_production_configuration_is_accepted():
         {"media_storage_driver": "local"},
         {"media_public_base_url": "http://media.pyyt.example.com"},
         {"media_public_base_url": None},
+        {"media_thumbnail_bucket": None},
+        {"media_thumbnail_bucket": "pyyt-videos"},
     ],
 )
 def test_invalid_production_configuration_is_rejected(overrides):
