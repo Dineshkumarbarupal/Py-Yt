@@ -7,6 +7,18 @@ const title = document.querySelector("#playlist-title");
 const description = document.querySelector("#playlist-description");
 const controls = document.querySelector("#playlist-controls");
 
+async function reorder(videoIds) {
+  try {
+    await apiRequest(`/playlists/${encodeURIComponent(id)}/items/order`, {
+      method: "PUT",
+      body: JSON.stringify({ video_ids: videoIds }),
+    });
+    await load();
+  } catch (error) {
+    status.textContent = error.message;
+  }
+}
+
 async function load() {
   try {
     const playlist = await apiRequest(`/playlists/${encodeURIComponent(id)}`);
@@ -64,7 +76,7 @@ async function load() {
       list.append(empty);
       return;
     }
-    for (const video of playlist.items) {
+    for (const [index, video] of playlist.items.entries()) {
       const card = document.createElement("article");
       card.className = "video-card";
       const link = document.createElement("a");
@@ -73,6 +85,30 @@ async function load() {
       link.textContent = video.title;
       card.append(link);
       if (playlist.is_owner) {
+        const actions = document.createElement("div");
+        actions.className = "playlist-video-actions";
+        const moveUp = document.createElement("button");
+        moveUp.type = "button";
+        moveUp.className = "secondary-button";
+        moveUp.textContent = "↑";
+        moveUp.disabled = index === 0;
+        moveUp.setAttribute("aria-label", "Move video up");
+        moveUp.addEventListener("click", async () => {
+          const ids = playlist.items.map((item) => item.video_id);
+          [ids[index - 1], ids[index]] = [ids[index], ids[index - 1]];
+          await reorder(ids);
+        });
+        const moveDown = document.createElement("button");
+        moveDown.type = "button";
+        moveDown.className = "secondary-button";
+        moveDown.textContent = "↓";
+        moveDown.disabled = index === playlist.items.length - 1;
+        moveDown.setAttribute("aria-label", "Move video down");
+        moveDown.addEventListener("click", async () => {
+          const ids = playlist.items.map((item) => item.video_id);
+          [ids[index], ids[index + 1]] = [ids[index + 1], ids[index]];
+          await reorder(ids);
+        });
         const remove = document.createElement("button");
         remove.type = "button";
         remove.className = "secondary-button danger-button";
@@ -87,7 +123,8 @@ async function load() {
             remove.disabled = false;
           }
         });
-        card.append(remove);
+        actions.append(moveUp, moveDown, remove);
+        card.append(actions);
       }
       list.append(card);
     }
