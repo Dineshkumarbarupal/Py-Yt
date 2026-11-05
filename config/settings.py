@@ -52,6 +52,8 @@ class Settings(BaseSettings):
             raise ValueError("Production media storage requires MEDIA_BUCKET, MEDIA_ACCESS_KEY_ID and MEDIA_SECRET_ACCESS_KEY.")
         if not self.media_public_base_url or not self.media_public_base_url.startswith("https://"):
             raise ValueError("Production custom thumbnails require an HTTPS MEDIA_PUBLIC_BASE_URL on the public media domain.")
+        if not self.media_public_base_url or not self.media_public_base_url.startswith("https://"):
+            raise ValueError("Production custom thumbnails require an HTTPS MEDIA_PUBLIC_BASE_URL on the public media domain.")
         return self
 
 settings = Settings()
