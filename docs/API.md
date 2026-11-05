@@ -17,7 +17,11 @@ OpenAPI documentation is available at /docs in non-production environments.
 | GET | /api/v1/videos/mine | Current creator videos |
 | POST | /api/v1/videos | Create private draft metadata |
 | GET/PATCH | /api/v1/videos/{video_id} | Read/update video metadata |
-| DELETE | /api/v1/videos/{video_id} | Delete creator-owned video and remove media object |
+| DELETE | /api/v1/videos/{video_id} | Delete creator-owned video and remove media objects |
+| GET | /api/v1/videos/{video_id}/captions | List public caption tracks |
+| PUT | /api/v1/videos/{video_id}/captions | Create/update an owner caption track using WebVTT |
+| DELETE | /api/v1/videos/{video_id}/captions/{caption_id} | Remove an owner caption track |
+| GET | /api/v1/videos/{video_id}/captions/{caption_id}/vtt | Deliver a caption file as text/vtt |
 | GET | /api/v1/videos/{video_id}/playback | Generate signed playback URL |
 | POST | /api/v1/videos/{video_id}/publish | Publish verified upload |
 | POST | /api/v1/videos/{video_id}/view | Increment public view counter |
