@@ -107,7 +107,7 @@ def test_chapter_validation_and_owner_permissions(client):
 
     invalid_first = client.put(
         f"/api/v1/videos/{video_id}/chapters",
-        json={"items": [{"start_seconds": 12, "title": "Not the beginning"}]},
+        json={"items": [{"start_seconds": 5, "title": "Not the beginning"}, {"start_seconds": 30, "title": "Middle"}, {"start_seconds": 60, "title": "End"}]},
         headers={"X-CSRF-Token": csrf},
     )
     assert invalid_first.status_code == 422
@@ -130,7 +130,8 @@ def test_chapter_validation_and_owner_permissions(client):
         json={
             "items": [
                 {"start_seconds": 0, "title": "Intro"},
-                {"start_seconds": 0, "title": "Duplicate"},
+                {"start_seconds": 30, "title": "Duplicate one"},
+                {"start_seconds": 30, "title": "Duplicate two"},
             ]
         },
         headers={"X-CSRF-Token": csrf},
