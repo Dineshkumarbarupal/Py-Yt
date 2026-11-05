@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from db.session import get_db
-from services.catalog import public_feed, public_shorts, search_public_videos
+from services.catalog import public_feed, public_shorts, search_public_videos, search_suggestions
 
 router = APIRouter()
 
@@ -15,6 +15,18 @@ def feed(
         "items": public_feed(db, category=category, limit=limit),
         "feed_type": "latest_public",
         "category": category or "All",
+    }
+
+
+@router.get("/suggest")
+def suggest(
+    q: str = Query(min_length=2, max_length=100),
+    limit: int = Query(default=8, ge=1, le=12),
+    db: Session = Depends(get_db),
+):
+    return {
+        "query": q,
+        "items": search_suggestions(db, query=q, limit=limit),
     }
 
 @router.get("/search")
