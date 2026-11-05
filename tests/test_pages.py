@@ -65,6 +65,7 @@ def test_watch_page_exposes_player_controls_and_comment_threads(client):
     assert response.status_code == 200
     assert 'id="player-speed"' in response.text
     assert 'id="theater-toggle"' in response.text
+    assert 'id="mini-player-toggle"' in response.text
     assert 'id="pip-toggle"' in response.text
     assert 'id="dislike-button"' in response.text
     assert 'id="share-button"' in response.text
