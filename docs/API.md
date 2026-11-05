@@ -19,7 +19,7 @@ OpenAPI documentation is available at /docs in non-production environments.
 | GET/PATCH | /api/v1/videos/{video_id} | Read/update video metadata |
 | DELETE | /api/v1/videos/{video_id} | Delete creator-owned video and remove media objects |
 | GET | /api/v1/videos/{video_id}/chapters | List public chapter markers |
-| PUT | /api/v1/videos/{video_id}/chapters | Replace owner-managed chapter timeline |
+| PUT | /api/v1/videos/{video_id}/chapters | Replace owner-managed chapter timeline (00:00 first, 3+ markers, ascending, 10s minimum) |
 | GET | /api/v1/videos/{video_id}/captions | List public caption tracks |
 | PUT | /api/v1/videos/{video_id}/captions | Create/update an owner caption track using WebVTT |
 | DELETE | /api/v1/videos/{video_id}/captions/{caption_id} | Remove an owner caption track |
