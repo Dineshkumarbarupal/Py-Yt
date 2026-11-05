@@ -2,9 +2,10 @@
   <button class="icon-button menu-toggle" id="menu-toggle" aria-label="Toggle navigation">☰</button>
   <a class="brand" href="/"><span class="brand-mark">▶</span><span>Py-Yt</span></a>
   <form class="search-form" id="search-form" role="search">
-    <input id="search-query" name="q" type="search" placeholder="Search" aria-label="Search videos" autocomplete="off">
+    <input id="search-query" name="q" type="search" placeholder="Search" aria-label="Search videos" autocomplete="off" list="search-suggestions">
     <button type="submit" aria-label="Search">⌕</button>
   </form>
+  <datalist id="search-suggestions"></datalist>
   <div class="top-actions">
     <button class="icon-button" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">◐</button>
     <button class="icon-button queue-open-button" id="queue-open" type="button">Queue <span id="queue-count">0</span></button>
