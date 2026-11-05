@@ -5,6 +5,7 @@ const libraryKey = page?.dataset.libraryKey;
 const container = document.querySelector("#library-videos");
 const status = document.querySelector("#library-status");
 const count = document.querySelector("#library-count");
+const clearButton = document.querySelector("#clear-library");
 
 function render(items) {
   container.replaceChildren();
@@ -24,6 +25,7 @@ function render(items) {
     container.append(empty);
     return;
   }
+  if (clearButton) clearButton.classList.toggle("hidden", libraryKey !== "history" || items.length === 0);
   for (const video of items) {
     const card = document.createElement("article");
     card.className = "video-card";
@@ -58,7 +60,32 @@ function render(items) {
       progress.textContent = `Watched to ${Math.floor(video.progress_seconds / 60)} min`;
       meta.append(progress);
     }
-    card.append(thumb, meta);
+    const actions = document.createElement("div");
+    actions.className = "library-card-actions";
+    if (libraryKey === "watch-later" || libraryKey === "liked" || libraryKey === "history") {
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "secondary-button";
+      remove.textContent = libraryKey === "watch-later" ? "Remove from Watch Later" : libraryKey === "liked" ? "Unlike" : "Remove from history";
+      remove.addEventListener("click", async () => {
+        remove.disabled = true;
+        try {
+          if (libraryKey === "watch-later") {
+            await apiRequest("/library/watch-later/" + encodeURIComponent(video.id), { method: "DELETE" });
+          } else if (libraryKey === "liked") {
+            await apiRequest("/engagement/videos/" + encodeURIComponent(video.id) + "/reaction", { method: "DELETE" });
+          } else {
+            await apiRequest("/engagement/history/" + encodeURIComponent(video.id), { method: "DELETE" });
+          }
+          await load();
+        } catch (error) {
+          status.textContent = error.message;
+          remove.disabled = false;
+        }
+      });
+      actions.append(remove);
+    }
+    card.append(thumb, meta, actions);
     container.append(card);
   }
 }
@@ -80,3 +107,17 @@ async function load() {
 }
 
 load();
+
+clearButton?.addEventListener("click", async () => {
+  if (!window.confirm("Clear your entire watch history?")) return;
+  clearButton.disabled = true;
+  try {
+    await apiRequest("/engagement/history", { method: "DELETE" });
+    await load();
+    status.textContent = "Watch history cleared.";
+  } catch (error) {
+    status.textContent = error.message;
+  } finally {
+    clearButton.disabled = false;
+  }
+});
