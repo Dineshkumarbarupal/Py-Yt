@@ -110,7 +110,7 @@ function linkifyDescriptionTimestamps() {
   const description = document.querySelector("#video-description");
   if (!description) return;
   const source = description.textContent || "";
-  const pattern = /(?<![\\w])(?:(\\d{1,2}):)?([0-5]?\\d):([0-5]\\d)(?![\\w])/g;
+  const pattern = /\b(?:(\d{1,2}):)?([0-5]?\d):([0-5]\d)\b/g;
   let cursor = 0;
   let match;
   const fragment = document.createDocumentFragment();
