@@ -2,6 +2,9 @@ import { apiRequest } from "./api.js";
 
 const form = document.querySelector("#search-form");
 const input = document.querySelector("#search-query");
+const suggestions = document.querySelector("#search-suggestions");
+let suggestionTimer = null;
+let suggestionRequest = 0;
 const feed = document.querySelector(".feed-section");
 const toastRegion = document.querySelector("#toast-region");
 let activeCategory = "All";
@@ -94,6 +97,33 @@ async function loadFeed(category = "All") {
   const result = await apiRequest(`/discovery/feed?category=${encodeURIComponent(category)}`);
   renderVideos(result.items, "No published videos are available in this category yet.");
 }
+
+
+input?.addEventListener("input", () => {
+  const query = input.value.trim();
+  window.clearTimeout(suggestionTimer);
+  const requestId = ++suggestionRequest;
+  if (!suggestions) return;
+  if (query.length < 2) {
+    suggestions.replaceChildren();
+    return;
+  }
+  suggestionTimer = window.setTimeout(async () => {
+    try {
+      const result = await apiRequest(`/discovery/suggest?q=${encodeURIComponent(query)}&limit=8`);
+      if (requestId !== suggestionRequest || input.value.trim() !== query) return;
+      suggestions.replaceChildren();
+      for (const item of result.items || []) {
+        const option = document.createElement("option");
+        option.value = item.label;
+        option.label = item.kind === "channel" ? `Channel · ${item.label}` : item.label;
+        suggestions.append(option);
+      }
+    } catch {
+      suggestions.replaceChildren();
+    }
+  }, 220);
+});
 
 form?.addEventListener("submit", async (event) => {
   event.preventDefault();
