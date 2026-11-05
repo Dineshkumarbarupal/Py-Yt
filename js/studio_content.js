@@ -312,7 +312,7 @@ function createVideoCard(video) {
   const chapterInput = document.createElement("textarea");
   chapterInput.rows = 5;
   chapterInput.maxLength = 20000;
-  chapterInput.placeholder = "00:00 | Introduction\\n01:35 | Main topic\\n04:20 | Summary";
+  chapterInput.placeholder = "00:00 | Introduction\n01:35 | Main topic\n04:20 | Summary";
   chapterInput.setAttribute("aria-label", "Video chapters in timestamp and title format");
   const chapterHelp = document.createElement("p");
   chapterHelp.className = "muted";
