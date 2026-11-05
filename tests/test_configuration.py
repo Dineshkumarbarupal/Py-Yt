@@ -16,6 +16,7 @@ def production_settings(**overrides):
         "media_bucket": "pyyt-videos",
         "media_access_key_id": "access-key",
         "media_secret_access_key": "secret-key",
+        "media_public_base_url": "https://media.pyyt.example.com",
     }
     values.update(overrides)
     return Settings(_env_file=None, **values)
@@ -39,6 +40,8 @@ def test_valid_production_configuration_is_accepted():
         {"media_access_key_id": None},
         {"media_secret_access_key": None},
         {"media_storage_driver": "local"},
+        {"media_public_base_url": "http://media.pyyt.example.com"},
+        {"media_public_base_url": None},
     ],
 )
 def test_invalid_production_configuration_is_rejected(overrides):
