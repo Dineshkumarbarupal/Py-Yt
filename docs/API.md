@@ -40,6 +40,8 @@ OpenAPI documentation is available at /docs in non-production environments.
 | PUT/DELETE | /api/v1/engagement/videos/{video_id}/reaction | Like/dislike or remove reaction |
 | POST | /api/v1/engagement/videos/{video_id}/history | Save watch progress |
 | GET | /api/v1/engagement/history | Current user's watch history |
+| DELETE | /api/v1/engagement/history/{video_id} | Remove one watch-history item |
+| DELETE | /api/v1/engagement/history | Clear the current user's watch history |
 | GET | /api/v1/library/watch-later | Current user's Watch Later list |
 | POST/DELETE | /api/v1/library/watch-later/{video_id} | Add/remove Watch Later item |
 | GET | /api/v1/library/liked | Current user's liked public videos |
