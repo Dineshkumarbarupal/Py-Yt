@@ -21,11 +21,11 @@ def client():
         config=Config(signature_version="s3v4"),
     )
 
-def create_upload_url(object_key: str, content_type: str) -> str:
+def create_upload_url(object_key: str, content_type: str, bucket_name: str | None = None) -> str:
     return client().generate_presigned_url(
         "put_object",
         Params={
-            "Bucket": settings.media_bucket,
+            "Bucket": bucket_name or settings.media_bucket,
             "Key": object_key,
             "ContentType": content_type,
         },
@@ -36,8 +36,8 @@ def create_upload_url(object_key: str, content_type: str) -> str:
 def inspect_uploaded_object(object_key: str) -> dict:
     return client().head_object(Bucket=settings.media_bucket, Key=object_key)
 
-def delete_object(object_key: str) -> None:
-    client().delete_object(Bucket=settings.media_bucket, Key=object_key)
+def delete_object(object_key: str, bucket_name: str | None = None) -> None:
+    client().delete_object(Bucket=bucket_name or settings.media_bucket, Key=object_key)
 
 def create_playback_url(object_key: str, expires_in: int = 600) -> str:
     return client().generate_presigned_url(
@@ -47,11 +47,12 @@ def create_playback_url(object_key: str, expires_in: int = 600) -> str:
     )
 
 
-def inspect_uploaded_image(object_key: str) -> dict:
+def inspect_uploaded_image(object_key: str, bucket_name: str | None = None) -> dict:
     storage = client()
-    metadata = storage.head_object(Bucket=settings.media_bucket, Key=object_key)
+    target_bucket = bucket_name or settings.media_bucket
+    metadata = storage.head_object(Bucket=target_bucket, Key=object_key)
     response = storage.get_object(
-        Bucket=settings.media_bucket,
+        Bucket=target_bucket,
         Key=object_key,
         Range="bytes=0-31",
     )
