@@ -118,15 +118,20 @@ def delete_video(
         raise HTTPException(status_code=404, detail="Video not found.")
     if video.status == "deleted":
         return Response(status_code=204)
-    if video.storage_key:
+    storage_keys = list(dict.fromkeys(
+        key for key in (video.storage_key, video.thumbnail_storage_key) if key
+    ))
+    for object_key in storage_keys:
         try:
-            delete_object(video.storage_key)
+            delete_object(object_key)
         except MediaStorageNotConfigured as exc:
             raise HTTPException(status_code=503, detail=str(exc))
         except (BotoCoreError, ClientError):
-            raise HTTPException(status_code=502, detail="The media object could not be deleted. The video remains unchanged.")
+            raise HTTPException(status_code=502, detail="A video or thumbnail object could not be deleted. Video metadata remains unchanged.")
     video.status = "deleted"
     video.visibility = "private"
+    video.thumbnail_url = None
+    video.thumbnail_storage_key = None
     db.commit()
     return Response(status_code=204)
 
