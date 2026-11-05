@@ -13,9 +13,9 @@ The original repository was empty. A modular FastAPI/MySQL web foundation has no
 - Registration/login/logout/current-user APIs with Argon2 password hashing and cookie-based JWT sessions; profile, avatar and password settings with current-password verification.
 - Channel profile APIs, public video catalog/search/feed and category filtering.
 - Playlist creation/list/detail/edit/delete, channel subscriptions and a latest-from-subscriptions feed, threaded comments/replies, live reaction counts, Watch Later, history, watch progress and in-app notifications.
-- Watch player speed, theater mode, picture-in-picture, keyboard shortcuts, link sharing and like/dislike controls.
+- Watch player speed, theater mode, picture-in-picture, keyboard shortcuts, link sharing, like/dislike, chapters and native subtitle tracks.
 - Standard/Shorts video-format metadata, creator upload selection and a vertical Shorts discovery feed.
-- Creator Studio overview, creator-owned content list, title/category/format/visibility filters, pagination, custom thumbnail upload/edit, multilingual WebVTT captions and comment hide/restore workflows.
+- Creator Studio overview, creator-owned content list, title/category/format/visibility filters, pagination, custom thumbnail upload/edit, multilingual WebVTT captions, chapter timeline editing and comment hide/restore workflows.
 - In-app notifications for new public uploads, new subscribers, comments and comment replies, with unread counters and mark-read actions.
 - UGC safety foundation: user reports for videos/comments and an admin-only review queue with dismiss or remove-content actions.
 - Presigned direct-to-S3-compatible video upload, object metadata verification, JPEG/PNG/WebP custom thumbnails stored in a separate public bucket, and expiring signed playback URLs.
@@ -23,7 +23,7 @@ The original repository was empty. A modular FastAPI/MySQL web foundation has no
 - Architecture, feature roadmap, API, security, development and deployment documentation.
 
 ### Not yet implemented or verified
-FFmpeg-validated Shorts duration and renditions, video transcoding/HLS, live streaming/chat, personalized recommendations, adaptive quality, chapter markers, retention/traffic-source analytics, full moderation/admin, notification email/push delivery, monetization, MFA/recovery and enterprise/global infrastructure are roadmap items. A feature is not complete just because its route or UI placeholder exists.
+FFmpeg-validated Shorts duration and renditions, video transcoding/HLS, live streaming/chat, personalized recommendations, adaptive quality, retention/traffic-source analytics, full moderation/admin, notification email/push delivery, monetization, MFA/recovery and enterprise/global infrastructure are roadmap items. A feature is not complete just because its route or UI placeholder exists.
 
 ## Technology
 - Frontend: HTML5, CSS3, vanilla JavaScript ES modules
