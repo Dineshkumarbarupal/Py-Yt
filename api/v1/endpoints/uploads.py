@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from botocore.exceptions import BotoCoreError, ClientError
 from config.settings import settings
 from core.dependencies import get_current_user
-from core.media_storage import MediaStorageNotConfigured, create_upload_url, delete_object, inspect_uploaded_object
+from core.media_storage import MediaStorageNotConfigured, create_upload_url, delete_object, inspect_uploaded_image, inspect_uploaded_object
 from db.models import Channel, Video, User, new_id
 from db.session import get_db
 
@@ -137,7 +137,7 @@ def complete_thumbnail_upload(
 
     object_key = f"thumbnails/{channel.id}/{video.id}/cover"
     try:
-        metadata = inspect_uploaded_object(object_key)
+        metadata = inspect_uploaded_image(object_key)
     except MediaStorageNotConfigured as exc:
         raise HTTPException(status_code=503, detail=str(exc))
     except (BotoCoreError, ClientError):
@@ -145,8 +145,19 @@ def complete_thumbnail_upload(
 
     content_type = metadata.get("ContentType")
     content_length = metadata.get("ContentLength")
+    signature = metadata.get("Signature", b"")
+    valid_signature = (
+        content_type == "image/jpeg" and signature.startswith(b"\\xff\\xd8\\xff")
+    ) or (
+        content_type == "image/png" and signature.startswith(b"\\x89PNG\\r\\n\\x1a\\n")
+    ) or (
+        content_type == "image/webp"
+        and signature[:4] == b"RIFF"
+        and signature[8:12] == b"WEBP"
+    )
     if (
         content_type not in ALLOWED_THUMBNAIL_TYPES
+        or not valid_signature
         or not isinstance(content_length, int)
         or content_length <= 0
         or content_length > THUMBNAIL_MAX_BYTES
@@ -155,7 +166,7 @@ def complete_thumbnail_upload(
             delete_object(object_key)
         except (MediaStorageNotConfigured, BotoCoreError, ClientError):
             raise HTTPException(status_code=502, detail="Thumbnail validation failed and the object could not be cleaned up.")
-        raise HTTPException(status_code=422, detail="Uploaded thumbnail must be a valid JPEG, PNG or WebP image up to 5 MB.")
+        raise HTTPException(status_code=422, detail="Uploaded thumbnail must contain a valid JPEG, PNG or WebP signature and be 5 MB or smaller.")
 
     public_base = settings.media_public_base_url.rstrip("/")
     public_url = f"{public_base}/{quote(object_key, safe='/')}?v={new_id().replace('-', '')}"
