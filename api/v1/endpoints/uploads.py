@@ -92,8 +92,15 @@ def presign_thumbnail_upload(
         raise HTTPException(status_code=415, detail="Thumbnail must be JPEG, PNG or WebP.")
     if payload.file_size_bytes > THUMBNAIL_MAX_BYTES:
         raise HTTPException(status_code=413, detail="Thumbnail must be 5 MB or smaller.")
-    if not settings.media_public_base_url:
-        raise HTTPException(status_code=503, detail="Configure MEDIA_PUBLIC_BASE_URL before uploading custom thumbnails.")
+    if (
+        not settings.media_thumbnail_bucket
+        or settings.media_thumbnail_bucket == settings.media_bucket
+        or not settings.media_public_base_url
+    ):
+        raise HTTPException(
+            status_code=503,
+            detail="Configure a separate MEDIA_THUMBNAIL_BUCKET and its MEDIA_PUBLIC_BASE_URL before uploading custom thumbnails.",
+        )
 
     channel = db.scalar(select(Channel).where(Channel.owner_id == user.id))
     video = db.get(Video, video_id)
@@ -136,8 +143,15 @@ def complete_thumbnail_upload(
         raise HTTPException(status_code=404, detail="Video not found.")
     if video.status not in {"ready", "published"}:
         raise HTTPException(status_code=409, detail="Complete the video upload before adding a thumbnail.")
-    if not settings.media_public_base_url:
-        raise HTTPException(status_code=503, detail="Configure MEDIA_PUBLIC_BASE_URL before publishing thumbnails.")
+    if (
+        not settings.media_thumbnail_bucket
+        or settings.media_thumbnail_bucket == settings.media_bucket
+        or not settings.media_public_base_url
+    ):
+        raise HTTPException(
+            status_code=503,
+            detail="Configure a separate MEDIA_THUMBNAIL_BUCKET and its MEDIA_PUBLIC_BASE_URL before publishing thumbnails.",
+        )
 
     object_key = f"thumbnails/{channel.id}/{video.id}/cover"
     try:
