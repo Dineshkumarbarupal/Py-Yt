@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from db.models import Channel, Comment, User, Video
 from services.notifications import notify
 from db.session import get_db
-from core.dependencies import get_current_user
+from core.dependencies import get_current_user, get_optional_user
 
 router = APIRouter(prefix="/comments")
 
@@ -14,8 +14,15 @@ class CommentCreate(BaseModel):
     body: str = Field(min_length=1, max_length=5000)
     parent_comment_id: str | None = None
 
+class CommentUpdate(BaseModel):
+    body: str = Field(min_length=1, max_length=5000)
+
 @router.get("/video/{video_id}")
-def list_comments(video_id: str, db: Session = Depends(get_db)):
+def list_comments(
+    video_id: str,
+    db: Session = Depends(get_db),
+    viewer: User | None = Depends(get_optional_user),
+):
     video = db.get(Video, video_id)
     if not video or video.status != "published" or video.visibility == "private":
         raise HTTPException(status_code=404, detail="Video not found.")
@@ -26,20 +33,27 @@ def list_comments(video_id: str, db: Session = Depends(get_db)):
         .order_by(Comment.created_at.desc())
         .limit(100)
     ).all()
-    return {"items": [
-        {
-            "id": comment.id,
-            "user_id": comment.user_id,
-            "display_name": user.display_name,
-            "body": comment.body,
-            "parent_comment_id": comment.parent_comment_id,
-            "created_at": comment.created_at,
-        }
-        for comment, user in rows
-    ]}
+    return {
+        "items": [
+            {
+                "id": comment.id,
+                "user_id": comment.user_id,
+                "display_name": user.display_name,
+                "body": comment.body,
+                "parent_comment_id": comment.parent_comment_id,
+                "created_at": comment.created_at,
+                "can_manage": bool(viewer and viewer.id == comment.user_id),
+            }
+            for comment, user in rows
+        ]
+    }
 
 @router.post("", status_code=201)
-def create_comment(payload: CommentCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def create_comment(
+    payload: CommentCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     video = db.get(Video, payload.video_id)
     if not video or video.status != "published" or video.visibility == "private":
         raise HTTPException(status_code=404, detail="Video not found.")
@@ -81,3 +95,37 @@ def create_comment(payload: CommentCreate, db: Session = Depends(get_db), user: 
         "display_name": user.display_name,
         "created_at": comment.created_at,
     }
+
+@router.patch("/{comment_id}")
+def update_comment(
+    comment_id: str,
+    payload: CommentUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    comment = db.get(Comment, comment_id)
+    if not comment or comment.user_id != user.id or comment.status != "visible":
+        raise HTTPException(status_code=404, detail="Comment not found.")
+    body = payload.body.strip()
+    if not body:
+        raise HTTPException(status_code=422, detail="Comment cannot be empty.")
+    comment.body = body
+    db.commit()
+    return {
+        "id": comment.id,
+        "body": comment.body,
+        "updated": True,
+    }
+
+@router.delete("/{comment_id}", status_code=204)
+def delete_comment(
+    comment_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    comment = db.get(Comment, comment_id)
+    if not comment or comment.user_id != user.id or comment.status != "visible":
+        raise HTTPException(status_code=404, detail="Comment not found.")
+    comment.status = "deleted"
+    db.commit()
+    return Response(status_code=204)
