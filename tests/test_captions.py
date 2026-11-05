@@ -122,7 +122,7 @@ def test_multilingual_captions_default_language_delivery_and_owner_controls(clie
         json={
             "language": "fr",
             "label": "Français",
-            "vtt_content": "WEBVTT\\n\\nnot-a-valid-timestamp --> 00:00:02.000\\nHello",
+            "vtt_content": "WEBVTT\n\nnot-a-valid-timestamp --> 00:00:02.000\nHello",
             "is_default": False,
         },
         headers={"X-CSRF-Token": csrf},
@@ -134,7 +134,7 @@ def test_multilingual_captions_default_language_delivery_and_owner_controls(clie
         json={
             "language": "de",
             "label": "Deutsch",
-            "vtt_content": "WEBVTT\\n\\n" + ("x" * 1_000_001),
+            "vtt_content": "WEBVTT\n\n" + ("x" * 1_000_001),
             "is_default": False,
         },
         headers={"X-CSRF-Token": csrf},
