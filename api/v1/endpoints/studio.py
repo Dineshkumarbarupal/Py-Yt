@@ -43,7 +43,7 @@ def creator_videos(
     limit: int = Query(default=30, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     q: str | None = Query(default=None, max_length=200),
-    status_filter: str | None = Query(default=None, alias="status", pattern="^(uploading|ready|published|failed|deleted|removed)$"),
+    status_filter: str | None = Query(default=None, alias="status", pattern="^(draft|uploading|ready|published|failed|deleted|removed)$"),
     visibility: str | None = Query(default=None, pattern="^(public|unlisted|private)$"),
     video_format: str | None = Query(default=None, pattern="^(standard|short)$"),
     db: Session = Depends(get_db),
@@ -56,6 +56,8 @@ def creator_videos(
         conditions.append(or_(Video.title.ilike(pattern), Video.description.ilike(pattern)))
     if status_filter:
         conditions.append(Video.status == status_filter)
+    else:
+        conditions.append(Video.status != "deleted")
     if visibility:
         conditions.append(Video.visibility == visibility)
     if video_format:
