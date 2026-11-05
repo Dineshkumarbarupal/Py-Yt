@@ -105,6 +105,42 @@ def test_multilingual_captions_default_language_delivery_and_owner_controls(clie
     )
     assert invalid.status_code == 422
 
+    blank_label = client.put(
+        f"/api/v1/videos/{video_id}/captions",
+        json={
+            "language": "fr",
+            "label": "   ",
+            "vtt_content": SPANISH_VTT,
+            "is_default": False,
+        },
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert blank_label.status_code == 422
+
+    invalid_timing = client.put(
+        f"/api/v1/videos/{video_id}/captions",
+        json={
+            "language": "fr",
+            "label": "Français",
+            "vtt_content": "WEBVTT\\n\\nnot-a-valid-timestamp --> 00:00:02.000\\nHello",
+            "is_default": False,
+        },
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert invalid_timing.status_code == 422
+
+    oversized = client.put(
+        f"/api/v1/videos/{video_id}/captions",
+        json={
+            "language": "de",
+            "label": "Deutsch",
+            "vtt_content": "WEBVTT\\n\\n" + ("x" * 1_000_001),
+            "is_default": False,
+        },
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert oversized.status_code == 422
+
     removed = client.delete(
         f"/api/v1/videos/{video_id}/captions/{english_id}",
         headers={"X-CSRF-Token": csrf},
