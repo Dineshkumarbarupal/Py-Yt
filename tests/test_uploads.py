@@ -125,3 +125,61 @@ def test_upload_rejects_unsupported_content_type(client):
         headers={"X-CSRF-Token": csrf},
     )
     assert response.status_code == 415
+
+
+def test_thumbnail_complete_rejects_invalid_image_signature_and_cleans_object(client, monkeypatch):
+    from db.models import Channel, Video
+    from db.session import SessionLocal
+    import api.v1.endpoints.uploads as uploads_module
+
+    registration = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "invalid-thumbnail@example.com",
+            "display_name": "Thumbnail Owner",
+            "password": "A-very-strong-test-password-21",
+        },
+    )
+    assert registration.status_code == 201
+    owner_id = registration.json()["id"]
+    csrf = client.cookies.get("pyyt_csrf")
+
+    with SessionLocal() as db:
+        channel = db.query(Channel).filter(Channel.owner_id == owner_id).one()
+        video = Video(
+            channel_id=channel.id,
+            title="Thumbnail validation test",
+            description="",
+            category="General",
+            source_type="upload",
+            visibility="private",
+            status="ready",
+        )
+        db.add(video)
+        db.commit()
+        video_id = video.id
+
+    monkeypatch.setattr(uploads_module.settings, "media_public_base_url", "https://media.example.test")
+    monkeypatch.setattr(
+        uploads_module,
+        "inspect_uploaded_image",
+        lambda object_key: {
+            "ContentLength": 256,
+            "ContentType": "image/png",
+            "Signature": b"this is not a PNG file",
+        },
+    )
+    deleted = []
+    monkeypatch.setattr(uploads_module, "delete_object", lambda object_key: deleted.append(object_key))
+
+    response = client.post(
+        f"/api/v1/uploads/{video_id}/thumbnail/complete",
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 422
+    assert deleted == [f"thumbnails/{channel.id}/{video_id}/cover"]
+
+    with SessionLocal() as db:
+        saved_video = db.get(Video, video_id)
+        assert saved_video.thumbnail_storage_key is None
+        assert saved_video.thumbnail_url is None
