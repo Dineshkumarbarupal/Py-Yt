@@ -26,7 +26,7 @@ def public_feed(
         .join(Channel, Video.channel_id == Channel.id)
         .where(Video.status == "published", Video.visibility == "public")
     )
-    if category and category != "All":
+    if category and category not in {"All", "Recently uploaded"}:
         statement = statement.where(Video.category == category)
     rows = db.execute(
         statement.order_by(desc(Video.published_at), desc(Video.created_at)).limit(limit)
@@ -50,7 +50,7 @@ def search_public_videos(
             or_(Video.title.ilike(pattern), Video.description.ilike(pattern), Channel.name.ilike(pattern)),
         )
     )
-    if category and category != "All":
+    if category and category not in {"All", "Recently uploaded"}:
         statement = statement.where(Video.category == category)
     rows = db.execute(
         statement.order_by(desc(Video.published_at), desc(Video.created_at)).offset(offset).limit(limit)
